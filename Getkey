@@ -1,6 +1,6 @@
 local ScriptLink = "https://raw.githubusercontent.com/NoName9989/LordGuy/main/Silent%20Assassins.lua"
 local GetKeyLink = "https://your-key-site.com/getkey"
-local CheckAPI = "https://your-api.com/check?key=%s&hwid=%s"
+local CheckAPI = "34692dc1-dad3-4868-9942-6623d4e16329"
 
 local HttpService = game:GetService("HttpService")
 local TweenService = game:GetService("TweenService")
