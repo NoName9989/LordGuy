@@ -1,8 +1,10 @@
--- loader + check map + load github script riêng từng map
-
 local Scripts = {
     [103854444055060] = "https://raw.githubusercontent.com/NoName9989/LordGuy/refs/heads/main/Silent%20Assassins"
--- UI LOAD
+}
+
+local TweenService = game:GetService("TweenService")
+local LOAD_TIME = 3
+
 local gui = Instance.new("ScreenGui", game.CoreGui)
 gui.IgnoreGuiInset = true
 gui.ResetOnSpawn = false
@@ -10,75 +12,130 @@ gui.ResetOnSpawn = false
 local bg = Instance.new("Frame", gui)
 bg.Size = UDim2.new(1,0,1,0)
 bg.BackgroundColor3 = Color3.fromRGB(0,0,0)
+bg.BackgroundTransparency = 1
+
+TweenService:Create(bg,TweenInfo.new(.4),{
+    BackgroundTransparency = .25
+}):Play()
 
 local holder = Instance.new("Frame", bg)
 holder.AnchorPoint = Vector2.new(0.5,0.5)
-holder.Position = UDim2.new(0.5,0,0.5,0)
-holder.Size = UDim2.new(0,320,0,180)
-holder.BackgroundTransparency = 1
+holder.Position = UDim2.new(0.5,0,0.5,30)
+holder.Size = UDim2.new(0,340,0,200)
+holder.BackgroundColor3 = Color3.fromRGB(18,18,18)
+holder.BorderSizePixel = 0
+Instance.new("UICorner",holder).CornerRadius = UDim.new(0,12)
+
+TweenService:Create(holder,TweenInfo.new(.4,Enum.EasingStyle.Quad),{
+    Position = UDim2.new(0.5,0,0.5,0)
+}):Play()
+
+local logo = Instance.new("ImageLabel", holder)
+logo.Size = UDim2.new(0,90,0,90)
+logo.Position = UDim2.new(0.5,-45,0,15)
+logo.BackgroundTransparency = 1
+logo.Image = "rbxassetid://82429467382024"
+
+local logoCorner = Instance.new("UICorner", logo)
+logoCorner.CornerRadius = UDim.new(1,0)
+
+local logoStroke = Instance.new("UIStroke", logo)
+logoStroke.Thickness = 2
+logoStroke.Color = Color3.fromRGB(255,255,255)
+logoStroke.Transparency = 0.3
 
 local title = Instance.new("TextLabel", holder)
 title.Size = UDim2.new(1,0,0,30)
-title.Position = UDim2.new(0,0,0,90)
+title.Position = UDim2.new(0,0,0,110)
 title.BackgroundTransparency = 1
-title.Text = "Nice Hub Loading"
-title.Font = Enum.Font.GothamBold
-title.TextSize = 18
-title.TextColor3 = Color3.new(1,1,1)
+title.Text = "Nice Hub"
+title.Font = Enum.Font.GothamBlack
+title.TextSize = 20
+title.TextColor3 = Color3.fromRGB(255,255,255)
+
+local sub = Instance.new("TextLabel", holder)
+sub.Size = UDim2.new(1,0,0,20)
+sub.Position = UDim2.new(0,0,0,135)
+sub.BackgroundTransparency = 1
+sub.Text = "Loading Script..."
+sub.Font = Enum.Font.Gotham
+sub.TextSize = 14
+sub.TextColor3 = Color3.fromRGB(200,200,200)
 
 local barBG = Instance.new("Frame", holder)
-barBG.Size = UDim2.new(1,0,0,8)
-barBG.Position = UDim2.new(0,0,1,-20)
-barBG.BackgroundColor3 = Color3.fromRGB(25,25,25)
+barBG.Size = UDim2.new(1,-40,0,10)
+barBG.Position = UDim2.new(0,20,1,-25)
+barBG.BackgroundColor3 = Color3.fromRGB(35,35,35)
+barBG.BorderSizePixel = 0
 Instance.new("UICorner", barBG).CornerRadius = UDim.new(1,0)
 
 local bar = Instance.new("Frame", barBG)
-bar.Size = UDim2.new(0.2,0,1,0)
+bar.Size = UDim2.new(0,0,1,0)
+bar.BorderSizePixel = 0
 Instance.new("UICorner", bar).CornerRadius = UDim.new(1,0)
 
--- rainbow
+local gradient = Instance.new("UIGradient", bar)
+gradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0.00, Color3.fromRGB(255,0,0)),
+    ColorSequenceKeypoint.new(0.16, Color3.fromRGB(255,140,0)),
+    ColorSequenceKeypoint.new(0.33, Color3.fromRGB(255,255,0)),
+    ColorSequenceKeypoint.new(0.50, Color3.fromRGB(0,255,0)),
+    ColorSequenceKeypoint.new(0.66, Color3.fromRGB(0,255,255)),
+    ColorSequenceKeypoint.new(0.83, Color3.fromRGB(0,120,255)),
+    ColorSequenceKeypoint.new(1.00, Color3.fromRGB(255,0,255))
+}
+gradient.Offset = Vector2.new(-1,0)
+
+local glow = Instance.new("UIStroke", bar)
+glow.Thickness = 1.5
+glow.Transparency = 0.2
+
+local function close()
+    TweenService:Create(bg,TweenInfo.new(.4),{
+        BackgroundTransparency = 1
+    }):Play()
+
+    TweenService:Create(holder,TweenInfo.new(.4,Enum.EasingStyle.Quad),{
+        Position = UDim2.new(0.5,0,0.5,40),
+        BackgroundTransparency = 1
+    }):Play()
+
+    task.wait(.4)
+    gui:Destroy()
+end
+
+local function unsupported()
+    sub.Text = "Script không hỗ trợ game này"
+    task.wait(1.8)
+    close()
+end
+
+local link = Scripts[game.PlaceId]
+
+if not link then
+    unsupported()
+    return
+end
+
+TweenService:Create(bar,TweenInfo.new(LOAD_TIME,Enum.EasingStyle.Linear),{
+    Size = UDim2.new(1,0,1,0)
+}):Play()
+
 task.spawn(function()
-    while gui.Parent do
-        bar.BackgroundColor3 = Color3.fromHSV((tick()%5)/5,1,1)
+    local start = tick()
+    while tick() - start < LOAD_TIME and gui.Parent do
+        local t = (tick() - start)/LOAD_TIME
+        gradient.Offset = Vector2.new(-1 + (2*t),0)
+        glow.Color = Color3.fromHSV(t,1,1)
         task.wait()
     end
 end)
 
--- not supported
-local function NotSupported()
-    title.Text = "Game chưa được hỗ trợ"
-    bar:TweenSize(UDim2.new(1,0,1,0),"Out","Quad",0.5,true)
-    task.wait(1.2)
-    gui:Destroy()
-end
+task.wait(LOAD_TIME)
 
--- loaded
-local function Loaded()
-    bar:TweenSize(UDim2.new(1,0,1,0),"Out","Quad",0.4,true)
-    task.wait(0.4)
-    gui:Destroy()
-end
-
--- check map
-local link = Scripts[game.PlaceId]
-
-if not link then
-    NotSupported()
-    return
-end
-
-title.Text = "Loading Script..."
-bar:TweenSize(UDim2.new(0.6,0,1,0),"Out","Quad",0.5,true)
-
--- load github script
-local success,err = pcall(function()
+pcall(function()
     loadstring(game:HttpGet(link))()
 end)
 
-if success then
-    Loaded()
-else
-    title.Text = "Lỗi khi load script"
-    task.wait(1.5)
-    gui:Destroy()
-end
+task.wait(.3)
+close()
