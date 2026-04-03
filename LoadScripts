@@ -1,0 +1,85 @@
+-- loader + check map + load github script riêng từng map
+
+local Scripts = {
+    [1234567890] = "https://raw.githubusercontent.com/USER/REPO/main/map1.lua",
+
+-- UI LOAD
+local gui = Instance.new("ScreenGui", game.CoreGui)
+gui.IgnoreGuiInset = true
+gui.ResetOnSpawn = false
+
+local bg = Instance.new("Frame", gui)
+bg.Size = UDim2.new(1,0,1,0)
+bg.BackgroundColor3 = Color3.fromRGB(0,0,0)
+
+local holder = Instance.new("Frame", bg)
+holder.AnchorPoint = Vector2.new(0.5,0.5)
+holder.Position = UDim2.new(0.5,0,0.5,0)
+holder.Size = UDim2.new(0,320,0,180)
+holder.BackgroundTransparency = 1
+
+local title = Instance.new("TextLabel", holder)
+title.Size = UDim2.new(1,0,0,30)
+title.Position = UDim2.new(0,0,0,90)
+title.BackgroundTransparency = 1
+title.Text = "Nice Hub Loading"
+title.Font = Enum.Font.GothamBold
+title.TextSize = 18
+title.TextColor3 = Color3.new(1,1,1)
+
+local barBG = Instance.new("Frame", holder)
+barBG.Size = UDim2.new(1,0,0,8)
+barBG.Position = UDim2.new(0,0,1,-20)
+barBG.BackgroundColor3 = Color3.fromRGB(25,25,25)
+Instance.new("UICorner", barBG).CornerRadius = UDim.new(1,0)
+
+local bar = Instance.new("Frame", barBG)
+bar.Size = UDim2.new(0.2,0,1,0)
+Instance.new("UICorner", bar).CornerRadius = UDim.new(1,0)
+
+-- rainbow
+task.spawn(function()
+    while gui.Parent do
+        bar.BackgroundColor3 = Color3.fromHSV((tick()%5)/5,1,1)
+        task.wait()
+    end
+end)
+
+-- not supported
+local function NotSupported()
+    title.Text = "Game chưa được hỗ trợ"
+    bar:TweenSize(UDim2.new(1,0,1,0),"Out","Quad",0.5,true)
+    task.wait(1.2)
+    gui:Destroy()
+end
+
+-- loaded
+local function Loaded()
+    bar:TweenSize(UDim2.new(1,0,1,0),"Out","Quad",0.4,true)
+    task.wait(0.4)
+    gui:Destroy()
+end
+
+-- check map
+local link = Scripts[game.PlaceId]
+
+if not link then
+    NotSupported()
+    return
+end
+
+title.Text = "Loading Script..."
+bar:TweenSize(UDim2.new(0.6,0,1,0),"Out","Quad",0.5,true)
+
+-- load github script
+local success,err = pcall(function()
+    loadstring(game:HttpGet(link))()
+end)
+
+if success then
+    Loaded()
+else
+    title.Text = "Lỗi khi load script"
+    task.wait(1.5)
+    gui:Destroy()
+end
