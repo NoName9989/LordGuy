@@ -1,7 +1,7 @@
 -- loader + check map + load github script riêng từng map
 
 local Scripts = {
-    [103854444055060] = "https://raw.githubusercontent.com/USER/REPO/main/map1.lua",
+    [103854444055060] = "https://raw.githubusercontent.com/NoName9989/LordGuy/refs/heads/main/Silent%20Assassins",
 
 -- UI LOAD
 local gui = Instance.new("ScreenGui", game.CoreGui)
