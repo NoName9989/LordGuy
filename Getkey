@@ -1,0 +1,123 @@
+local ScriptLink = "https://raw.githubusercontent.com/NoName9989/LordGuy/main/Silent%20Assassins.lua"
+local GetKeyLink = "https://your-key-site.com/getkey"
+local CheckAPI = "https://your-api.com/check?key=%s&hwid=%s"
+
+local HttpService = game:GetService("HttpService")
+local TweenService = game:GetService("TweenService")
+local HWID = game:GetService("RbxAnalyticsService"):GetClientId()
+
+local gui = Instance.new("ScreenGui", game.CoreGui)
+gui.ResetOnSpawn = false
+gui.IgnoreGuiInset = true
+
+local bg = Instance.new("Frame", gui)
+bg.Size = UDim2.new(1,0,1,0)
+bg.BackgroundColor3 = Color3.new(0,0,0)
+bg.BackgroundTransparency = .3
+
+local holder = Instance.new("Frame", bg)
+holder.Size = UDim2.new(0,340,0,230)
+holder.Position = UDim2.new(.5,-170,.5,-115)
+holder.BackgroundColor3 = Color3.fromRGB(18,18,18)
+holder.BorderSizePixel = 0
+Instance.new("UICorner",holder).CornerRadius = UDim.new(0,12)
+
+local logo = Instance.new("ImageLabel", holder)
+logo.Size = UDim2.new(0,90,0,90)
+logo.Position = UDim2.new(.5,-45,0,10)
+logo.BackgroundTransparency = 1
+logo.Image = "rbxassetid://82429467382024"
+Instance.new("UICorner",logo).CornerRadius = UDim.new(1,0)
+
+local stroke = Instance.new("UIStroke", logo)
+stroke.Thickness = 2
+stroke.Transparency = .3
+
+local title = Instance.new("TextLabel", holder)
+title.Size = UDim2.new(1,0,0,30)
+title.Position = UDim2.new(0,0,0,95)
+title.BackgroundTransparency = 1
+title.Text = "Nice Hub"
+title.Font = Enum.Font.GothamBlack
+title.TextSize = 20
+title.TextColor3 = Color3.new(1,1,1)
+
+local box = Instance.new("TextBox", holder)
+box.Size = UDim2.new(1,-40,0,32)
+box.Position = UDim2.new(0,20,0,130)
+box.BackgroundColor3 = Color3.fromRGB(25,25,25)
+box.PlaceholderText = "Enter Key..."
+box.Text = ""
+box.TextColor3 = Color3.new(1,1,1)
+box.Font = Enum.Font.Gotham
+box.TextSize = 14
+box.BorderSizePixel = 0
+Instance.new("UICorner",box).CornerRadius = UDim.new(0,8)
+
+local get = Instance.new("TextButton", holder)
+get.Size = UDim2.new(.5,-25,0,30)
+get.Position = UDim2.new(0,20,1,-40)
+get.Text = "Get Key"
+get.Font = Enum.Font.GothamBold
+get.TextSize = 14
+get.TextColor3 = Color3.new(1,1,1)
+get.BackgroundColor3 = Color3.fromRGB(30,30,30)
+get.BorderSizePixel = 0
+Instance.new("UICorner",get).CornerRadius = UDim.new(0,8)
+
+local check = Instance.new("TextButton", holder)
+check.Size = UDim2.new(.5,-25,0,30)
+check.Position = UDim2.new(.5+0.01,0,1,-40)
+check.Text = "Submit"
+check.Font = Enum.Font.GothamBold
+check.TextSize = 14
+check.TextColor3 = Color3.new(1,1,1)
+check.BackgroundColor3 = Color3.fromRGB(30,30,30)
+check.BorderSizePixel = 0
+Instance.new("UICorner",check).CornerRadius = UDim.new(0,8)
+
+local status = Instance.new("TextLabel", holder)
+status.Size = UDim2.new(1,0,0,20)
+status.Position = UDim2.new(0,0,1,-65)
+status.BackgroundTransparency = 1
+status.Text = ""
+status.Font = Enum.Font.Gotham
+status.TextSize = 13
+status.TextColor3 = Color3.fromRGB(200,200,200)
+
+get.MouseButton1Click:Connect(function()
+    setclipboard(GetKeyLink.."?hwid="..HWID)
+    status.Text = "Link copied to clipboard"
+end)
+
+local function close()
+    TweenService:Create(bg,TweenInfo.new(.3),{
+        BackgroundTransparency = 1
+    }):Play()
+
+    TweenService:Create(holder,TweenInfo.new(.3),{
+        Position = holder.Position + UDim2.new(0,0,0,40),
+        BackgroundTransparency = 1
+    }):Play()
+
+    task.wait(.3)
+    gui:Destroy()
+end
+
+check.MouseButton1Click:Connect(function()
+    status.Text = "Checking key..."
+    
+    local url = string.format(CheckAPI,box.Text,HWID)
+    local ok,res = pcall(function()
+        return game:HttpGet(url)
+    end)
+
+    if ok and res == "OK" then
+        status.Text = "Key valid"
+        task.wait(.5)
+        loadstring(game:HttpGet(ScriptLink))()
+        close()
+    else
+        status.Text = "Invalid key"
+    end
+end)
