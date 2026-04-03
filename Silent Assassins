@@ -1,0 +1,266 @@
+--// Services
+local Players = game:GetService("Players")
+local RS = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local LP = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+--// States
+local AutoHit = false
+local PlayerESP = false
+local AutoBasic = false
+local AutoDivine = false
+local currentTab = "Main"
+
+--// UI
+local gui = Instance.new("ScreenGui", game.CoreGui)
+gui.Name = "LordGuy"
+gui.ResetOnSpawn = false
+
+local main = Instance.new("Frame", gui)
+main.Size = UDim2.new(0,420,0,260)
+main.Position = UDim2.new(0.5,-210,0.5,-130)
+main.BackgroundColor3 = Color3.fromRGB(18,18,18)
+main.BorderSizePixel = 0
+main.Active = true
+main.Draggable = true
+Instance.new("UICorner", main).CornerRadius = UDim.new(0,10)
+
+local title = Instance.new("TextLabel", main)
+title.Size = UDim2.new(1,0,0,36)
+title.BackgroundTransparency = 1
+title.Text = "Nice Hub"
+title.Font = Enum.Font.GothamBold
+title.TextSize = 16
+title.TextColor3 = Color3.new(1,1,1)
+
+local close = Instance.new("TextButton", main)
+close.Size = UDim2.new(0,30,0,30)
+close.Position = UDim2.new(1,-35,0,3)
+close.Text = "X"
+close.Font = Enum.Font.GothamBold
+close.TextSize = 14
+close.BackgroundColor3 = Color3.fromRGB(30,30,30)
+close.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner",close)
+
+local mini = Instance.new("TextButton", main)
+mini.Size = UDim2.new(0,30,0,30)
+mini.Position = UDim2.new(1,-70,0,3)
+mini.Text = "-"
+mini.Font = Enum.Font.GothamBold
+mini.TextSize = 18
+mini.BackgroundColor3 = Color3.fromRGB(30,30,30)
+mini.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner",mini)
+
+-- tabs
+local tab1 = Instance.new("TextButton", main)
+tab1.Size = UDim2.new(0,100,0,28)
+tab1.Position = UDim2.new(0,10,0,40)
+tab1.Text = "Main"
+tab1.Font = Enum.Font.GothamBold
+tab1.TextSize = 13
+tab1.BackgroundColor3 = Color3.fromRGB(45,45,45)
+tab1.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner",tab1)
+
+local tab2 = tab1:Clone()
+tab2.Parent = main
+tab2.Position = UDim2.new(0,120,0,40)
+tab2.Text = "Open Chest"
+tab2.BackgroundColor3 = Color3.fromRGB(35,35,35)
+
+-- pages
+local page1 = Instance.new("Frame", main)
+page1.Size = UDim2.new(1,-20,1,-80)
+page1.Position = UDim2.new(0,10,0,70)
+page1.BackgroundTransparency = 1
+
+local page2 = page1:Clone()
+page2.Parent = main
+page2.Visible = false
+
+-- toggle
+local function Toggle(text,parent,pos,callback)
+    local btn = Instance.new("TextButton", parent)
+    btn.Size = UDim2.new(0,180,0,36)
+    btn.Position = pos
+    btn.BackgroundColor3 = Color3.fromRGB(30,30,30)
+    btn.Text = text.." : OFF"
+    btn.Font = Enum.Font.Gotham
+    btn.TextSize = 13
+    btn.TextColor3 = Color3.new(1,1,1)
+    Instance.new("UICorner",btn)
+
+    local state=false
+    btn.MouseButton1Click:Connect(function()
+        state=not state
+        btn.Text = text.." : "..(state and "ON" or "OFF")
+        callback(state)
+    end)
+end
+
+-- toggles
+Toggle("Auto Hit All",page1,UDim2.new(0,0,0,0),function(v) AutoHit=v end)
+Toggle("Player ESP",page1,UDim2.new(0,200,0,0),function(v) PlayerESP=v end)
+
+Toggle("Auto Basic Chest",page2,UDim2.new(0,0,0,0),function(v) AutoBasic=v end)
+Toggle("Auto Divine Chest",page2,UDim2.new(0,200,0,0),function(v) AutoDivine=v end)
+
+-- tab switch
+tab1.MouseButton1Click:Connect(function()
+    currentTab = "Main"
+    page1.Visible=true
+    page2.Visible=false
+    tab1.BackgroundColor3 = Color3.fromRGB(45,45,45)
+    tab2.BackgroundColor3 = Color3.fromRGB(35,35,35)
+end)
+
+tab2.MouseButton1Click:Connect(function()
+    currentTab = "Chest"
+    page1.Visible=false
+    page2.Visible=true
+    tab2.BackgroundColor3 = Color3.fromRGB(45,45,45)
+    tab1.BackgroundColor3 = Color3.fromRGB(35,35,35)
+end)
+
+-- close
+close.MouseButton1Click:Connect(function()
+    gui:Destroy()
+end)
+
+-- minimize FIXED
+local minimized=false
+mini.MouseButton1Click:Connect(function()
+    minimized = not minimized
+
+    if minimized then
+        page1.Visible=false
+        page2.Visible=false
+        tab1.Visible=false
+        tab2.Visible=false
+        main.Size = UDim2.new(0,420,0,36)
+    else
+        tab1.Visible=true
+        tab2.Visible=true
+        main.Size = UDim2.new(0,420,0,260)
+
+        if currentTab=="Main" then
+            page1.Visible=true
+            page2.Visible=false
+        else
+            page1.Visible=false
+            page2.Visible=true
+        end
+    end
+end)
+
+-- ESP
+local ESP = {}
+
+local function createESP(plr)
+    local box = Drawing.new("Square")
+    box.Thickness = 1
+    box.Filled = false
+    box.Color = Color3.fromRGB(255,255,255)
+    box.Visible = false
+
+    local name = Drawing.new("Text")
+    name.Size = 13
+    name.Center = true
+    name.Outline = true
+    name.Color = Color3.fromRGB(255,255,255)
+    name.Visible = false
+
+    ESP[plr] = {box = box, name = name}
+end
+
+for _,p in ipairs(Players:GetPlayers()) do
+    if p ~= LP then createESP(p) end
+end
+
+Players.PlayerAdded:Connect(function(p)
+    if p ~= LP then createESP(p) end
+end)
+
+-- loop
+RunService.RenderStepped:Connect(function()
+
+    if AutoHit then
+        for _,plr in ipairs(Players:GetPlayers()) do
+            if plr ~= LP and plr.Character and LP.Character then
+                local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
+                local my = LP.Character:FindFirstChild("HumanoidRootPart")
+                if hrp and my then
+                    local dir = (hrp.Position - my.Position).Unit
+                    RS.Events.GameRemoteFunction:InvokeServer(
+                        "AttemptWeaponHit",
+                        {
+                            hitboxOffset=Vector3.new(0,0,-1.5),
+                            knockback=50,
+                            shouldLock=true,
+                            shouldSlow=true,
+                            attackCooldown=0,
+                            hitboxSize=Vector3.new(9,14,8),
+                            lungeKnockback=55,
+                            slowTime=1.5,
+                            slowMult=0.2,
+                            cycleIndex=1,
+                            damage=100,
+                            tool=LP.Character:FindFirstChildOfClass("Tool"),
+                            shouldLunge=true
+                        },
+                        {{
+                            knockback=50,
+                            isClosestEnemy=true,
+                            origin=my.Position,
+                            enemyModel=plr.Character,
+                            distance=(hrp.Position-my.Position).Magnitude,
+                            direction=dir
+                        }}
+                    )
+                end
+            end
+        end
+    end
+
+    for plr,esp in pairs(ESP) do
+        if PlayerESP then
+            local char = plr.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            local head = char and char:FindFirstChild("Head")
+
+            if hrp and head then
+                local top = Camera:WorldToViewportPoint(head.Position+Vector3.new(0,0.5,0))
+                local bottom = Camera:WorldToViewportPoint(hrp.Position-Vector3.new(0,3,0))
+                local h = math.abs(top.Y-bottom.Y)
+                local w = h/2
+
+                if top.Z>0 and bottom.Z>0 then
+                    esp.box.Size = Vector2.new(w,h)
+                    esp.box.Position = Vector2.new(top.X-w/2,top.Y)
+                    esp.box.Visible = true
+                    esp.name.Position = Vector2.new(top.X,top.Y-14)
+                    esp.name.Text = plr.Name
+                    esp.name.Visible = true
+                else
+                    esp.box.Visible=false
+                    esp.name.Visible=false
+                end
+            end
+        else
+            esp.box.Visible=false
+            esp.name.Visible=false
+        end
+    end
+
+    if AutoBasic then
+        RS.Events.GameRemoteFunction:InvokeServer("AttemptRollGachaChest","Basic")
+    end
+
+    if AutoDivine then
+        RS.Events.GameRemoteFunction:InvokeServer("AttemptRollGachaChest","Divine")
+    end
+
+end)
