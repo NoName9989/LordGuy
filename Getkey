@@ -1,6 +1,8 @@
 local ScriptLink = "https://raw.githubusercontent.com/NoName9989/LordGuy/main/Silent%20Assassins"
 local GetKeyLink = "https://new.pandadevelopment.net/getkey/lordcatkey"
-local CheckAPI = "aa566fff-8c5c-4d94-b8d8-51aa733c4006"
+
+local CheckAPIKEY = "aa566fff-8c5c-4d94-b8d8-51aa733c4006"
+local CheckAPI = "https://pandadevelopment.net/service/verify?service="
 
 local HttpService = game:GetService("HttpService")
 local TweenService = game:GetService("TweenService")
@@ -108,7 +110,7 @@ end
 check.MouseButton1Click:Connect(function()
     status.Text = "Checking key..."
     
-    local url = CheckAPI .. "?key=" .. box.Text .. "&hwid=" .. HWID
+    local url = CheckAPI .. CheckAPIKEY .. "&key=" .. box.Text .. "&hwid=" .. HWID
     
     local ok,res = pcall(function()
         return game:HttpGet(url)
