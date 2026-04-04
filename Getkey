@@ -2,7 +2,7 @@ local ScriptLink = "https://raw.githubusercontent.com/NoName9989/LordGuy/main/Si
 local GetKeyLink = "https://new.pandadevelopment.net/getkey/lordcatkey"
 
 local CheckAPIKEY = "aa566fff-8c5c-4d94-b8d8-51aa733c4006"
-local CheckAPI = "https://pandadevelopment.net/service/verify?service="
+local CheckAPI = "https://pandadevelopment.net/v4_validation"   -- ← V4 UPDATE
 
 local HttpService = game:GetService("HttpService")
 local TweenService = game:GetService("TweenService")
@@ -87,6 +87,7 @@ status.Font = Enum.Font.Gotham
 status.TextSize = 13
 status.TextColor3 = Color3.fromRGB(200,200,200)
 
+-- Get Key
 get.MouseButton1Click:Connect(function()
     local link = GetKeyLink .. "?hwid=" .. HWID
     setclipboard(link)
@@ -107,21 +108,32 @@ local function close()
     gui:Destroy()
 end
 
+-- CHECK KEY V4 (ĐÃ FIX)
 check.MouseButton1Click:Connect(function()
     status.Text = "Checking key..."
     
-    local url = CheckAPI .. CheckAPIKEY .. "&key=" .. box.Text .. "&hwid=" .. HWID
+    local url = CheckAPI .. "?hwid=" .. HWID .. "&service=" .. CheckAPIKEY .. "&key=" .. box.Text
     
-    local ok,res = pcall(function()
+    local ok, res = pcall(function()
         return game:HttpGet(url)
     end)
 
-    if ok and (res == "OK" or res == "valid" or res == "true") then
-        status.Text = "Key valid"
-        task.wait(.5)
-        loadstring(game:HttpGet(ScriptLink))()
-        close()
+    if ok then
+        local decodeOk, data = pcall(function()
+            return HttpService:JSONDecode(res)
+        end)
+        
+        if decodeOk and data and (data.success or data.authenticated or data.valid or data.V4_Authentication) then
+            status.Text = "Key valid ✓"
+            task.wait(0.5)
+            loadstring(game:HttpGet(ScriptLink))()
+            close()
+        else
+            status.Text = "Invalid key ❌"
+            -- Nếu vẫn lỗi, uncomment dòng dưới để debug
+            -- print("Panda Response:", res)
+        end
     else
-        status.Text = "Invalid key"
+        status.Text = "Lỗi kết nối / Key sai"
     end
 end)
