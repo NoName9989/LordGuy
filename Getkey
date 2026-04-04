@@ -1,6 +1,6 @@
 local ScriptLink = "https://raw.githubusercontent.com/NoName9989/LordGuy/main/Silent%20Assassins.lua"
-local GetKeyLink = "https://your-key-site.com/getkey"
-local CheckAPI = "34692dc1-dad3-4868-9942-6623d4e16329"
+local GetKeyLink = "https://new.pandadevelopment.net/getkey/lordcatkey"
+local CheckAPI = "https://new.pandadevelopment.net/api/aa566fff-8c5c-4d94-b8d8-51aa733c4006"
 
 local HttpService = game:GetService("HttpService")
 local TweenService = game:GetService("TweenService")
@@ -37,7 +37,7 @@ local title = Instance.new("TextLabel", holder)
 title.Size = UDim2.new(1,0,0,30)
 title.Position = UDim2.new(0,0,0,95)
 title.BackgroundTransparency = 1
-title.Text = "Nice Hub"
+title.Text = "LorCat Hub"
 title.Font = Enum.Font.GothamBlack
 title.TextSize = 20
 title.TextColor3 = Color3.new(1,1,1)
@@ -86,8 +86,9 @@ status.TextSize = 13
 status.TextColor3 = Color3.fromRGB(200,200,200)
 
 get.MouseButton1Click:Connect(function()
-    setclipboard(GetKeyLink.."?hwid="..HWID)
-    status.Text = "Link copied to clipboard"
+    local link = GetKeyLink .. "?hwid=" .. HWID
+    setclipboard(link)
+    status.Text = "Copied get key link"
 end)
 
 local function close()
@@ -107,12 +108,13 @@ end
 check.MouseButton1Click:Connect(function()
     status.Text = "Checking key..."
     
-    local url = string.format(CheckAPI,box.Text,HWID)
+    local url = CheckAPI .. "?key=" .. box.Text .. "&hwid=" .. HWID
+    
     local ok,res = pcall(function()
         return game:HttpGet(url)
     end)
 
-    if ok and res == "OK" then
+    if ok and (res == "OK" or res == "valid" or res == "true") then
         status.Text = "Key valid"
         task.wait(.5)
         loadstring(game:HttpGet(ScriptLink))()
