@@ -108,32 +108,41 @@ local function close()
     gui:Destroy()
 end
 
--- CHECK KEY V4 (ĐÃ FIX)
 check.MouseButton1Click:Connect(function()
     status.Text = "Checking key..."
     
-    local url = CheckAPI .. "?hwid=" .. HWID .. "&service=" .. CheckAPIKEY .. "&key=" .. box.Text
-    
+    local url = CheckAPI
+        .. "?service=" .. CheckAPIKEY
+        .. "&key=" .. box.Text
+        .. "&hwid=" .. HWID
+
     local ok, res = pcall(function()
         return game:HttpGet(url)
     end)
 
-    if ok then
-        local decodeOk, data = pcall(function()
-            return HttpService:JSONDecode(res)
-        end)
-        
-        if decodeOk and data and (data.success or data.authenticated or data.valid or data.V4_Authentication) then
-            status.Text = "Key valid ✓"
-            task.wait(0.5)
-            loadstring(game:HttpGet(ScriptLink))()
-            close()
-        else
-            status.Text = "Invalid key ❌"
-            -- Nếu vẫn lỗi, uncomment dòng dưới để debug
-            -- print("Panda Response:", res)
-        end
+    if not ok then
+        status.Text = "Connection failed"
+        return
+    end
+
+    local data
+    local decodeOk = pcall(function()
+        data = HttpService:JSONDecode(res)
+    end)
+
+    if not decodeOk or not data then
+        status.Text = "Bad response"
+        return
+    end
+
+    -- Panda V4 real check
+    if data.status == "valid" or data.valid == true or data.authenticated == true then
+        status.Text = "Key valid ✓"
+        task.wait(0.4)
+        loadstring(game:HttpGet(ScriptLink))()
+        close()
     else
-        status.Text = "Lỗi kết nối / Key sai"
+        status.Text = "Invalid key ❌"
+        -- print(res) -- debug nếu cần
     end
 end)
