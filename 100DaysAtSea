@@ -22,7 +22,7 @@ local Window = Library:CreateWindow({
 
 local Tabs = {
     Farm = Window:AddTab("Farm", "play"),
-    Teleport = Window:AddTab("Teleport", "map"),
+    TeleportTab = Window:AddTab("Teleport", "map"),
     MiscTab = Window:AddTab("Misc", "more-horizontal"),
     ["UI Settings"] = Window:AddTab("UI Settings", "settings"),
 }
