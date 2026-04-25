@@ -243,7 +243,44 @@ local TeleportGroup = TeleportTab:AddLeftGroupbox("Teleport Islands", "map-pin")
 
 local player = game.Players.LocalPlayer
 
--- Hàm Teleport an toàn (dùng chung)
+-- Hàm bật Noclip trong 5 giây
+local function EnableNoclipFor5Seconds()
+    local character = player.Character
+    if not character then return end
+
+    local noclipConnection
+
+    noclipConnection = game:GetService("RunService").Stepped:Connect(function()
+        if not character or not character:FindFirstChild("Humanoid") then 
+            if noclipConnection then noclipConnection:Disconnect() end
+            return 
+        end
+
+        for _, part in pairs(character:GetDescendants()) do
+            if part:IsA("BasePart") and part.CanCollide == true then
+                part.CanCollide = false
+            end
+        end
+    end)
+
+    -- Tắt Noclip sau 5 giây
+    task.delay(5, function()
+        if noclipConnection then 
+            noclipConnection:Disconnect() 
+        end
+        
+        -- Khôi phục CanCollide
+        if character then
+            for _, part in pairs(character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = true
+                end
+            end
+        end
+    end)
+end
+
+-- Hàm Teleport an toàn (Y +30 + Noclip 5s)
 local function SafeTeleport(targetCFrame, locationName)
     local character = player.Character
     if not character then 
@@ -257,25 +294,23 @@ local function SafeTeleport(targetCFrame, locationName)
         return 
     end
 
+    -- Reset vận tốc
     root.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
     root.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
 
-    -- Offset cao để tránh dính vật cản
-    local safeCFrame = targetCFrame * CFrame.new(0, 22, 10)
+    -- Teleport với chiều cao +30
+    local safeCFrame = targetCFrame * CFrame.new(0, 30, 8)   -- +30 Y + 8 Z (ra trước một chút)
 
     character:PivotTo(safeCFrame)
 
-    task.wait(0.15)
-    if root then
-        root.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-    end
+    -- Bật Noclip 5 giây
+    EnableNoclipFor5Seconds()
 
-    Library:Notify({Title = "HG Gui", Description = "✅ Đã TP đến " .. locationName, Time = 2.5})
+    Library:Notify({Title = "HG Gui", Description = "✅ TP đến " .. locationName .. " (+30 Y + Noclip 5s)", Time = 3})
 end
 
--- ================== CÁC NÚT TELEPORT THỦ CÔNG ==================
+-- ================== CÁC NÚT TELEPORT ==================
 
--- Home
 TeleportGroup:AddButton({
     Text = "🏠 Home",
     Func = function()
@@ -288,7 +323,6 @@ TeleportGroup:AddButton({
     end,
 })
 
--- Tutorial Island
 TeleportGroup:AddButton({
     Text = "🌴 Tutorial Island",
     Func = function()
@@ -302,7 +336,6 @@ TeleportGroup:AddButton({
     end,
 })
 
--- Temple Island
 TeleportGroup:AddButton({
     Text = "⛩️ Temple Island",
     Func = function()
@@ -316,7 +349,6 @@ TeleportGroup:AddButton({
     end,
 })
 
--- Cage Island
 TeleportGroup:AddButton({
     Text = "🗝️ Cage Island",
     Func = function()
@@ -330,7 +362,6 @@ TeleportGroup:AddButton({
     end,
 })
 
--- Ancient Lighthouse (Nút thủ công)
 TeleportGroup:AddButton({
     Text = "🏮 Ancient Lighthouse",
     Func = function()
@@ -344,47 +375,9 @@ TeleportGroup:AddButton({
     end,
 })
 
--- ================== TOGGLE AUTO TP ANCIENT LIGHTHOUSE ==================
 TeleportGroup:AddDivider()
-TeleportGroup:AddLabel("Auto Teleport", true)
-
-local AutoTPAncientToggle = TeleportGroup:AddToggle("AutoTPAncient", {
-    Text = "🔄 Auto TP Ancient Lighthouse",
-    Default = false,
-    Tooltip = "Bật để tự động teleport liên tục đến Ancient Lighthouse",
-})
-
-local autoTPConnection = nil
-
-AutoTPAncientToggle:OnChanged(function(state)
-    if state then
-        Library:Notify({Title = "HG Gui", Description = "Auto TP Ancient Lighthouse BẬT", Time = 3})
-        
-        autoTPConnection = task.spawn(function()
-            while AutoTPAncientToggle.Value and not Library.Unloaded do
-                local island = workspace.IslandContainer:FindFirstChild("AncientLighthouse")
-                if island then
-                    local cf = island.PrimaryPart and island.PrimaryPart.CFrame or island:GetPivot()
-                    SafeTeleport(cf, "Ancient Lighthouse (Auto)")
-                end
-                task.wait(5) -- Delay 5 giây giữa các lần TP
-            end
-        end)
-    else
-        Library:Notify({Title = "HG Gui", Description = "Auto TP Ancient Lighthouse TẮT", Time = 3})
-        if autoTPConnection then
-            task.cancel(autoTPConnection)
-            autoTPConnection = nil
-        end
-    end
-end)
-
--- Cleanup khi unload GUI
-Library:OnUnload(function()
-    if autoTPConnection then
-        task.cancel(autoTPConnection)
-    end
-end)
+TeleportGroup:AddLabel("Mỗi lần TP sẽ tự bật Noclip 5 giây", true)
+TeleportGroup:AddLabel("Chiều cao +30 so với vị trí gốc", true)
 
 -- ================== UI SETTINGS ==================
 local MenuGroup = Tabs["UI Settings"]:AddLeftGroupbox("Menu Settings", "wrench")
