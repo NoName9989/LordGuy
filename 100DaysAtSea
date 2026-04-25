@@ -15,7 +15,7 @@ Library.ShowToggleFrameInKeybinds = true
 local Window = Library:CreateWindow({
     Title = "HG Gui",
     Footer = "Made by HenGi",
-    Icon = 95816097006870,           
+    Icon = 73071239069153,           
     NotifySide = "Right",
     ShowCustomCursor = false,        
 })
