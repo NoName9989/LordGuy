@@ -385,10 +385,13 @@ local CraftGuiToggle = MiscGroup:AddToggle("CraftGuiToggle", {
 })
 
 CraftGuiToggle:OnChanged(function(state)
-    local craftGui = player.PlayerGui:FindFirstChild("Crafting")
+    local playerGui = player:FindFirstChild("PlayerGui")
+    if not playerGui then return end
+
+    local craftGui = playerGui:FindFirstChild("Crafting")
     if craftGui then
         craftGui.Enabled = state
-        Library:Notify({Title = "HG Gui", Description = (state and "Đã MỞ" or "Đã ĐÓNG") .. " Craft Gui", Time = 2})
+        Library:Notify({Title = "HG Gui", Description = (state and "Đã MỞ" or "ĐÃ ĐÓNG") .. " Craft Gui", Time = 2})
     else
         Library:Notify({Title = "HG Gui", Description = "Không tìm thấy Crafting GUI!", Time = 3})
     end
@@ -401,20 +404,18 @@ local SpeedToggleValue = false
 local JumpToggleValue = false
 local NoclipToggleValue = false
 
--- Hàm áp dụng Speed & JumpPower khi nhân vật load lại (giữ vĩnh viễn)
+-- ================== FIX 2 ==================
 local function ApplyPermanentStats(character)
     local humanoid = character:WaitForChild("Humanoid", 5)
     if humanoid then
-        humanoid.WalkSpeed = CurrentSpeed
-        humanoid.JumpPower = CurrentJump
+        humanoid.WalkSpeed = SpeedToggleValue and CurrentSpeed or 16
+        humanoid.JumpPower = JumpToggleValue and CurrentJump or 50
         humanoid.UseJumpPower = true
     end
 end
 
--- Kết nối CharacterAdded để giữ stats khi chết / respawn
 player.CharacterAdded:Connect(ApplyPermanentStats)
 
--- Áp dụng ngay nếu nhân vật đã load
 if player.Character then
     ApplyPermanentStats(player.Character)
 end
@@ -486,24 +487,28 @@ local noclipConnection = nil
 
 NoclipToggle:OnChanged(function(state)
     NoclipToggleValue = state
-    
+
+    -- ================== FIX 3 ==================
+    if noclipConnection then
+        noclipConnection:Disconnect()
+        noclipConnection = nil
+    end
+
     if state then
         noclipConnection = game:GetService("RunService").Stepped:Connect(function()
-            if player.Character then
-                for _, part in pairs(player.Character:GetDescendants()) do
-                    if part:IsA("BasePart") then
-                        part.CanCollide = false
-                    end
+            local char = player.Character
+            if not char then return end
+
+            for _, part in pairs(char:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = false
                 end
             end
         end)
+
         Library:Notify({Title = "HG Gui", Description = "Noclip BẬT (vĩnh viễn)", Time = 3})
     else
-        if noclipConnection then
-            noclipConnection:Disconnect()
-            noclipConnection = nil
-        end
-        -- Khôi phục CanCollide
+        -- ================== FIX 4 ==================
         if player.Character then
             for _, part in pairs(player.Character:GetDescendants()) do
                 if part:IsA("BasePart") then
@@ -511,6 +516,7 @@ NoclipToggle:OnChanged(function(state)
                 end
             end
         end
+
         Library:Notify({Title = "HG Gui", Description = "Noclip TẮT", Time = 3})
     end
 end)
@@ -524,9 +530,6 @@ MiscGroup:AddButton({
     end,
 })
 
-MiscGroup:AddDivider()
-MiscGroup:AddLabel("Speed & Jump sẽ giữ nguyên khi chết", true)
-MiscGroup:AddLabel("Noclip bật là vĩnh viễn đến khi tắt", true)
 
 -- ================== UI SETTINGS ==================
 local MenuGroup = Tabs["UI Settings"]:AddLeftGroupbox("Menu Settings", "wrench")
