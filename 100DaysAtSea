@@ -239,11 +239,12 @@ OneButtonToggle:OnChanged(function(state)
 end)
 
 -- ================== TAB 2: TELEPORT ==================
-local TeleportGroup = Tabs.Teleport:AddLeftGroupbox("Teleport Islands", "map-pin")
+local TeleportTab = Tabs.Teleport or Window:AddTab("Teleport", "map")
+local TeleportGroup = TeleportTab:AddLeftGroupbox("Teleport Islands", "map-pin")
 
 local player = game.Players.LocalPlayer
 
--- Hàm Noclip 5 giây
+-- Hàm bật Noclip trong 5 giây
 local function EnableNoclipFor5Seconds()
     local character = player.Character
     if not character then return end
@@ -268,7 +269,7 @@ local function EnableNoclipFor5Seconds()
     end)
 end
 
--- Hàm Teleport (+30 Y)
+-- Hàm Teleport an toàn (Y = 200)
 local function SafeTeleport(targetCFrame, locationName)
     local character = player.Character
     if not character or not character:FindFirstChild("HumanoidRootPart") then
@@ -277,47 +278,101 @@ local function SafeTeleport(targetCFrame, locationName)
     end
 
     local root = character.HumanoidRootPart
-    root.AssemblyLinearVelocity = Vector3.new(0,0,0)
-    root.AssemblyAngularVelocity = Vector3.new(0,0,0)
+    root.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+    root.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
 
-    local safeCFrame = targetCFrame * CFrame.new(0, 30, 8)
+    -- Độ cao +200 như yêu cầu
+    local safeCFrame = targetCFrame * CFrame.new(0, 200, 8)
+
     character:PivotTo(safeCFrame)
 
+    -- Bật Noclip 5 giây
     EnableNoclipFor5Seconds()
 
-    Library:Notify({Title = "HG Gui", Description = "✅ TP đến " .. locationName, Time = 3})
+    Library:Notify({Title = "HG Gui", Description = "✅ TP đến " .. locationName .. " (+200 Y + Noclip 5s)", Time = 3})
 end
 
--- Các nút teleport
-TeleportGroup:AddButton({ Text = "🏠 Home", Func = function()
-    local sp = workspace:FindFirstChild("SpawnLocation")
-    if sp then SafeTeleport(sp.CFrame, "Home") end
-end})
+-- ================== CÁC NÚT TELEPORT ==================
 
-TeleportGroup:AddButton({ Text = "🌴 Tutorial Island", Func = function()
-    local isl = workspace.IslandContainer:FindFirstChild("TutorialIsland")
-    if isl then SafeTeleport(isl.PrimaryPart and isl.PrimaryPart.CFrame or isl:GetPivot(), "Tutorial Island") end
-end})
+TeleportGroup:AddButton({
+    Text = "🏠 Home",
+    Func = function()
+        local spawnLoc = workspace:FindFirstChild("SpawnLocation")
+        if spawnLoc then
+            SafeTeleport(spawnLoc.CFrame, "Home")
+        else
+            Library:Notify({Title = "HG Gui", Description = "Không tìm thấy Home!", Time = 3})
+        end
+    end,
+})
 
-TeleportGroup:AddButton({ Text = "⛩️ Temple Island", Func = function()
-    local isl = workspace.IslandContainer:FindFirstChild("TempleIsland")
-    if isl then SafeTeleport(isl.PrimaryPart and isl.PrimaryPart.CFrame or isl:GetPivot(), "Temple Island") end
-end})
+TeleportGroup:AddButton({
+    Text = "🌴 Tutorial Island",
+    Func = function()
+        local island = workspace.IslandContainer:FindFirstChild("TutorialIsland")
+        if island then
+            local cf = island.PrimaryPart and island.PrimaryPart.CFrame or island:GetPivot()
+            SafeTeleport(cf, "Tutorial Island")
+        else
+            Library:Notify({Title = "HG Gui", Description = "Không tìm thấy TutorialIsland!", Time = 3})
+        end
+    end,
+})
 
-TeleportGroup:AddButton({ Text = "🗝️ Cage Island", Func = function()
-    local isl = workspace.IslandContainer:FindFirstChild("CageIsland")
-    if isl then SafeTeleport(isl.PrimaryPart and isl.PrimaryPart.CFrame or isl:GetPivot(), "Cage Island") end
-end})
+TeleportGroup:AddButton({
+    Text = "⛩️ Temple Island",
+    Func = function()
+        local island = workspace.IslandContainer:FindFirstChild("TempleIsland")
+        if island then
+            local cf = island.PrimaryPart and island.PrimaryPart.CFrame or island:GetPivot()
+            SafeTeleport(cf, "Temple Island")
+        else
+            Library:Notify({Title = "HG Gui", Description = "Không tìm thấy TempleIsland!", Time = 3})
+        end
+    end,
+})
 
-TeleportGroup:AddButton({ Text = "🏴‍☠️ Pirate Stronghold", Func = function()
-    local isl = workspace.IslandContainer:FindFirstChild("PirateStronghold")
-    if isl then SafeTeleport(isl.PrimaryPart and isl.PrimaryPart.CFrame or isl:GetPivot(), "Pirate Stronghold") end
-end})
+TeleportGroup:AddButton({
+    Text = "🗝️ Cage Island",
+    Func = function()
+        local island = workspace.IslandContainer:FindFirstChild("CageIsland")
+        if island then
+            local cf = island.PrimaryPart and island.PrimaryPart.CFrame or island:GetPivot()
+            SafeTeleport(cf, "Cage Island")
+        else
+            Library:Notify({Title = "HG Gui", Description = "Không tìm thấy CageIsland!", Time = 3})
+        end
+    end,
+})
 
-TeleportGroup:AddButton({ Text = "🏝️ Shanty Island", Func = function()
-    local isl = workspace.IslandContainer:FindFirstChild("ShantyIsland")
-    if isl then SafeTeleport(isl.PrimaryPart and isl.PrimaryPart.CFrame or isl:GetPivot(), "Shanty Island") end
-end})
+TeleportGroup:AddButton({
+    Text = "🏴‍☠️ Pirate Stronghold",
+    Func = function()
+        local island = workspace.IslandContainer:FindFirstChild("PirateStronghold")
+        if island then
+            local cf = island.PrimaryPart and island.PrimaryPart.CFrame or island:GetPivot()
+            SafeTeleport(cf, "Pirate Stronghold")
+        else
+            Library:Notify({Title = "HG Gui", Description = "Không tìm thấy PirateStronghold!", Time = 3})
+        end
+    end,
+})
+
+TeleportGroup:AddButton({
+    Text = "🏝️ Shanty Island",
+    Func = function()
+        local island = workspace.IslandContainer:FindFirstChild("ShantyIsland")
+        if island then
+            local cf = island.PrimaryPart and island.PrimaryPart.CFrame or island:GetPivot()
+            SafeTeleport(cf, "Shanty Island")
+        else
+            Library:Notify({Title = "HG Gui", Description = "Không tìm thấy ShantyIsland!", Time = 3})
+        end
+    end,
+})
+
+TeleportGroup:AddDivider()
+TeleportGroup:AddLabel("Độ cao +200 | Tự bật Noclip 5 giây khi TP", true)
 
 
 -- ================== UI SETTINGS ==================
