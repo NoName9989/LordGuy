@@ -23,7 +23,7 @@ local Window = Library:CreateWindow({
 local Tabs = {
     FarmTab = Window:AddTab("Farm", "play"),
     TeleportTab = Window:AddTab("Teleport", "map"),
-    MiscTab = Window:AddTab("Misc", "more-horizontal"),
+    MiscTab = Window:AddTab("Misc", "layout-grid"),
     ["UI Settings"] = Window:AddTab("UI Settings", "settings"),
 }
 
@@ -373,7 +373,7 @@ TeleportGroup:AddButton({
 
 
 -- ================== TAB 3: MISC ==================
-local MiscGroup = Tabs.MiscTab:AddLeftGroupbox("Miscellaneous", "tool")
+local MiscGroup = Tabs.MiscTab:AddLeftGroupbox("Miscellaneous", "rocket")
 
 local player = game.Players.LocalPlayer
 
