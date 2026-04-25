@@ -23,6 +23,7 @@ local Window = Library:CreateWindow({
 local Tabs = {
     Farm = Window:AddTab("Farm", "play"),
     Teleport = Window:AddTab("Teleport", "map"),
+    MiscTab = Tabs.Misc or Window:AddTab("Misc", "more-horizontal"),
     ["UI Settings"] = Window:AddTab("UI Settings", "settings"),
 }
 
@@ -239,7 +240,6 @@ OneButtonToggle:OnChanged(function(state)
 end)
 
 -- ================== TAB 2: TELEPORT ==================
-local TeleportTab = Tabs.Teleport or Window:AddTab("Teleport", "map")
 local TeleportGroup = TeleportTab:AddLeftGroupbox("Teleport Islands", "map-pin")
 
 local player = game.Players.LocalPlayer
@@ -374,6 +374,161 @@ TeleportGroup:AddButton({
 TeleportGroup:AddDivider()
 TeleportGroup:AddLabel("Độ cao +200 | Tự bật Noclip 5 giây khi TP", true)
 
+-- ================== TAB 3: MISC ==================
+local MiscGroup = MiscTab:AddLeftGroupbox("Miscellaneous", "tool")
+
+local player = game.Players.LocalPlayer
+
+-- ================== NÚT 1: Toggle Craft Gui ==================
+local CraftGuiToggle = MiscGroup:AddToggle("CraftGuiToggle", {
+    Text = "Craft Gui (Mở / Đóng)",
+    Default = false,
+    Tooltip = "Bấm để mở hoặc đóng Crafting GUI",
+})
+
+CraftGuiToggle:OnChanged(function(state)
+    local craftGui = player.PlayerGui:FindFirstChild("Crafting")
+    if craftGui then
+        craftGui.Enabled = state
+        Library:Notify({Title = "HG Gui", Description = (state and "Đã MỞ" or "Đã ĐÓNG") .. " Craft Gui", Time = 2})
+    else
+        Library:Notify({Title = "HG Gui", Description = "Không tìm thấy Crafting GUI!", Time = 3})
+    end
+end)
+
+-- ================== Biến lưu giá trị để giữ vĩnh viễn khi chết ==================
+local CurrentSpeed = 16
+local CurrentJump = 50
+local SpeedToggleValue = false
+local JumpToggleValue = false
+local NoclipToggleValue = false
+
+-- Hàm áp dụng Speed & JumpPower khi nhân vật load lại (giữ vĩnh viễn)
+local function ApplyPermanentStats(character)
+    local humanoid = character:WaitForChild("Humanoid", 5)
+    if humanoid then
+        humanoid.WalkSpeed = CurrentSpeed
+        humanoid.JumpPower = CurrentJump
+        humanoid.UseJumpPower = true
+    end
+end
+
+-- Kết nối CharacterAdded để giữ stats khi chết / respawn
+player.CharacterAdded:Connect(ApplyPermanentStats)
+
+-- Áp dụng ngay nếu nhân vật đã load
+if player.Character then
+    ApplyPermanentStats(player.Character)
+end
+
+-- ================== NÚT 2: Toggle Speed + Slider ==================
+local SpeedToggle = MiscGroup:AddToggle("SpeedToggle", {
+    Text = "Speed Hack",
+    Default = false,
+})
+
+local SpeedSlider = MiscGroup:AddSlider("SpeedSlider", {
+    Text = "Tốc độ di chuyển",
+    Default = 16,
+    Min = 16,
+    Max = 300,
+    Rounding = 0,
+    Callback = function(value)
+        CurrentSpeed = value
+        if SpeedToggleValue and player.Character and player.Character:FindFirstChild("Humanoid") then
+            player.Character.Humanoid.WalkSpeed = value
+        end
+    end,
+})
+
+SpeedToggle:OnChanged(function(state)
+    SpeedToggleValue = state
+    if player.Character and player.Character:FindFirstChild("Humanoid") then
+        player.Character.Humanoid.WalkSpeed = state and CurrentSpeed or 16
+    end
+    Library:Notify({Title = "HG Gui", Description = "Speed " .. (state and "BẬT" or "TẮT"), Time = 2})
+end)
+
+-- ================== NÚT 3: Toggle Jump + Slider ==================
+local JumpToggle = MiscGroup:AddToggle("JumpToggle", {
+    Text = "Jump Hack",
+    Default = false,
+})
+
+local JumpSlider = MiscGroup:AddSlider("JumpSlider", {
+    Text = "Độ cao nhảy",
+    Default = 50,
+    Min = 50,
+    Max = 500,
+    Rounding = 0,
+    Callback = function(value)
+        CurrentJump = value
+        if JumpToggleValue and player.Character and player.Character:FindFirstChild("Humanoid") then
+            player.Character.Humanoid.JumpPower = value
+        end
+    end,
+})
+
+JumpToggle:OnChanged(function(state)
+    JumpToggleValue = state
+    if player.Character and player.Character:FindFirstChild("Humanoid") then
+        player.Character.Humanoid.JumpPower = state and CurrentJump or 50
+        player.Character.Humanoid.UseJumpPower = true
+    end
+    Library:Notify({Title = "HG Gui", Description = "Jump " .. (state and "BẬT" or "TẮT"), Time = 2})
+end)
+
+-- ================== NÚT 4: Toggle Noclip (vĩnh viễn) ==================
+local NoclipToggle = MiscGroup:AddToggle("NoclipToggle", {
+    Text = "Noclip",
+    Default = false,
+})
+
+local noclipConnection = nil
+
+NoclipToggle:OnChanged(function(state)
+    NoclipToggleValue = state
+    
+    if state then
+        noclipConnection = game:GetService("RunService").Stepped:Connect(function()
+            if player.Character then
+                for _, part in pairs(player.Character:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.CanCollide = false
+                    end
+                end
+            end
+        end)
+        Library:Notify({Title = "HG Gui", Description = "Noclip BẬT (vĩnh viễn)", Time = 3})
+    else
+        if noclipConnection then
+            noclipConnection:Disconnect()
+            noclipConnection = nil
+        end
+        -- Khôi phục CanCollide
+        if player.Character then
+            for _, part in pairs(player.Character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = true
+                end
+            end
+        end
+        Library:Notify({Title = "HG Gui", Description = "Noclip TẮT", Time = 3})
+    end
+end)
+
+-- ================== NÚT 5: Button Fly ==================
+MiscGroup:AddButton({
+    Text = "🕊️ Fly (FlyGui V3)",
+    Func = function()
+        Library:Notify({Title = "HG Gui", Description = "Đang load Fly GUI...", Time = 2})
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/XNEOFF/FlyGuiV3/main/FlyGuiV3.txt"))()
+    end,
+})
+
+MiscGroup:AddDivider()
+MiscGroup:AddLabel("Speed & Jump sẽ giữ nguyên khi chết", true)
+MiscGroup:AddLabel("Noclip bật là vĩnh viễn đến khi tắt", true)
 
 -- ================== UI SETTINGS ==================
 local MenuGroup = Tabs["UI Settings"]:AddLeftGroupbox("Menu Settings", "wrench")
