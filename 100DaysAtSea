@@ -240,7 +240,7 @@ OneButtonToggle:OnChanged(function(state)
 end)
 
 -- ================== TAB 2: TELEPORT ==================
-local TeleportGroup = TeleportTab:AddLeftGroupbox("Teleport Islands", "map-pin")
+local TeleportGroup = Tabs.TeleportTab:AddLeftGroupbox("Teleport Islands", "map-pin")
 
 local player = game.Players.LocalPlayer
 
@@ -375,7 +375,7 @@ TeleportGroup:AddDivider()
 TeleportGroup:AddLabel("Độ cao +200 | Tự bật Noclip 5 giây khi TP", true)
 
 -- ================== TAB 3: MISC ==================
-local MiscGroup = MiscTab:AddLeftGroupbox("Miscellaneous", "tool")
+local MiscGroup = Tabs.MiscTab:AddLeftGroupbox("Miscellaneous", "tool")
 
 local player = game.Players.LocalPlayer
 
