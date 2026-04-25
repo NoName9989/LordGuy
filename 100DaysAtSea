@@ -1,0 +1,272 @@
+-- HG Gui | Made by HenGi
+-- Obsidian UI Library
+
+local repo = "https://raw.githubusercontent.com/deividcomsono/Obsidian/main/"
+local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
+local ThemeManager = loadstring(game:HttpGet(repo .. "addons/ThemeManager.lua"))()
+local SaveManager = loadstring(game:HttpGet(repo .. "addons/SaveManager.lua"))()
+
+local Options = Library.Options
+local Toggles = Library.Toggles
+
+Library.ForceCheckbox = false
+Library.ShowToggleFrameInKeybinds = true
+
+local Window = Library:CreateWindow({
+    Title = "HG Gui",
+    Footer = "Made by HenGi",
+    Icon = 95816097006870,           
+    NotifySide = "Right",
+    ShowCustomCursor = false,        
+})
+
+local Tabs = {
+    Farm = Window:AddTab("Farm", "play"),
+    ["UI Settings"] = Window:AddTab("UI Settings", "settings"),
+}
+
+-- ================== TAB FARM ==================
+local FarmLeft = Tabs.Farm:AddLeftGroupbox("Auto Chest", "boxes")
+
+-- Toggle 1: Auto Farm All Chest
+local AutoFarmAllToggle = FarmLeft:AddToggle("AutoFarmAll", {
+    Text = "Auto Farm Chest",
+    Default = false,
+    Tooltip = "Auto TP and Open Chest",
+})
+
+local farmAllConnection = nil
+local isFarmingAll = false
+
+AutoFarmAllToggle:OnChanged(function(state)
+    isFarmingAll = state
+
+    if state then
+        Library:Notify({ Title = "HG Gui", Description = "Auto Farm Chest đã BẬT", Time = 3 })
+        
+        farmAllConnection = task.spawn(function()
+            while isFarmingAll and not Library.Unloaded do
+                local chestsFolder = workspace:WaitForChild("Chests", 3)
+                if not chestsFolder then 
+                    task.wait(1) 
+                    continue 
+                end
+
+                local openedAny = false
+
+                for _, chest in ipairs(chestsFolder:GetChildren()) do
+                    if not isFarmingAll then break end
+
+                    local prompt = chest:FindFirstChild("ProximityPrompt", true)
+                    if not prompt or not prompt:IsA("ProximityPrompt") or not prompt.Enabled then
+                        continue
+                    end
+
+                    local character = game.Players.LocalPlayer.Character
+                    if not character or not character:FindFirstChild("HumanoidRootPart") then continue end
+
+                    -- TP đến rương
+                    local targetPart = prompt.Parent
+                    if not targetPart:IsA("BasePart") then
+                        targetPart = chest:FindFirstChildWhichIsA("BasePart")
+                    end
+
+                    if targetPart then
+                        character:PivotTo(targetPart.CFrame * CFrame.new(0, 5, 3))
+                        task.wait(0.7)
+                    end
+
+                    fireproximityprompt(prompt)
+                    print("HG Gui → Đã mở: " .. chest.Name)
+                    openedAny = true
+
+                    task.wait(1.3) -- Delay an toàn
+                end
+
+                if not openedAny then
+                    Library:Notify({ Title = "HG Gui", Description = "Đã mở hết rương hoặc không còn rương mới!", Time = 4 })
+                    task.wait(4)
+                end
+
+                task.wait(0.8)
+            end
+        end)
+    else
+        Library:Notify({ Title = "HG Gui", Description = "Auto Farm All đã TẮT", Time = 3 })
+        if farmAllConnection then
+            task.cancel(farmAllConnection)
+            farmAllConnection = nil
+        end
+    end
+end)
+
+-- Toggle 2: Hiện / Ẩn GUI 1 Nút
+local OneButtonToggle = FarmLeft:AddToggle("OneButtonMode", {
+    Text = "Open Button TP Chest",
+    Default = false,
+    Tooltip = "Bật để hiện giao diện thủ công 1 nút",
+})
+
+-- Tạo GUI 1 nút
+local oneButtonScreenGui = nil
+local oneButtonFrame = nil
+
+local function CreateOneButtonGUI()
+    if oneButtonScreenGui then return end
+
+    local player = game.Players.LocalPlayer
+
+    oneButtonScreenGui = Instance.new("ScreenGui")
+    oneButtonScreenGui.Name = "HG_OneButton"
+    oneButtonScreenGui.ResetOnSpawn = false
+    oneButtonScreenGui.Parent = player:WaitForChild("PlayerGui")
+
+    oneButtonFrame = Instance.new("Frame")
+    oneButtonFrame.Size = UDim2.new(0, 290, 0, 140)
+    oneButtonFrame.Position = UDim2.new(0, 25, 0.3, 0)
+    oneButtonFrame.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
+    oneButtonFrame.BorderSizePixel = 0
+    oneButtonFrame.Parent = oneButtonScreenGui
+
+    -- Title
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, 0, 0, 40)
+    title.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    title.Text = "HG Gui - 1 Nút Auto Chest"
+    title.TextColor3 = Color3.new(1, 1, 1)
+    title.TextScaled = true
+    title.Font = Enum.Font.GothamBold
+    title.Parent = oneButtonFrame
+
+    -- Button
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(0.92, 0, 0, 65)
+    button.Position = UDim2.new(0.04, 0, 0, 48)
+    button.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+    button.Text = "TP & Mở Rương Tiếp Theo"
+    button.TextColor3 = Color3.new(1, 1, 1)
+    button.TextScaled = true
+    button.Font = Enum.Font.GothamSemibold
+    button.Parent = oneButtonFrame
+
+    -- Status
+    local statusLabel = Instance.new("TextLabel")
+    statusLabel.Size = UDim2.new(1, 0, 0, 25)
+    statusLabel.Position = UDim2.new(0, 0, 1, -28)
+    statusLabel.BackgroundTransparency = 1
+    statusLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+    statusLabel.TextScaled = true
+    statusLabel.Text = "Rương 1 / ?"
+    statusLabel.Parent = oneButtonFrame
+
+    -- Logic
+    local currentIndex = 1
+    local chestsFolder = workspace:WaitForChild("Chests")
+
+    local function TeleportAndOpenNextChest()
+        local allChests = chestsFolder:GetChildren()
+        if #allChests == 0 then
+            button.Text = "Không tìm thấy rương!"
+            return
+        end
+
+        if currentIndex > #allChests then
+            button.Text = "Đã mở hết rương!"
+            button.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+            statusLabel.Text = "Hoàn thành tất cả"
+            return
+        end
+
+        local chest = allChests[currentIndex]
+        local prompt = chest:FindFirstChild("ProximityPrompt", true)
+
+        if not prompt or not prompt.Enabled then
+            currentIndex += 1
+            statusLabel.Text = "Rương " .. currentIndex .. " / " .. #allChests
+            TeleportAndOpenNextChest()
+            return
+        end
+
+        local character = player.Character
+        if character and character:FindFirstChild("HumanoidRootPart") then
+            local targetPart = prompt.Parent
+            if not targetPart:IsA("BasePart") then
+                targetPart = chest:FindFirstChildWhichIsA("BasePart")
+            end
+            if targetPart then
+                character:PivotTo(targetPart.CFrame * CFrame.new(0, 5, 3))
+                task.wait(0.7)
+            end
+        end
+
+        fireproximityprompt(prompt)
+        print("HG Gui → Mở rương " .. currentIndex .. ": " .. chest.Name)
+
+        currentIndex += 1
+        statusLabel.Text = "Rương " .. currentIndex .. " / " .. #allChests
+
+        if currentIndex <= #allChests then
+            button.Text = "TP & Mở Rương " .. currentIndex
+        else
+            button.Text = "Đã mở hết rương!"
+            button.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+        end
+    end
+
+    button.MouseButton1Click:Connect(TeleportAndOpenNextChest)
+
+    -- Update số lượng ban đầu
+    task.spawn(function()
+        statusLabel.Text = "Rương 1 / " .. #chestsFolder:GetChildren()
+    end)
+end
+
+-- Xử lý bật/tắt GUI 1 nút
+OneButtonToggle:OnChanged(function(state)
+    if state then
+        CreateOneButtonGUI()
+        if oneButtonFrame then 
+            oneButtonFrame.Visible = true 
+        end
+        Library:Notify({ Title = "HG Gui", Description = "Đã hiện GUI 1 nút", Time = 2 })
+    else
+        if oneButtonFrame then 
+            oneButtonFrame.Visible = false 
+        end
+        Library:Notify({ Title = "HG Gui", Description = "Đã ẩn GUI 1 nút", Time = 2 })
+    end
+end)
+
+-- ================== UI SETTINGS ==================
+local MenuGroup = Tabs["UI Settings"]:AddLeftGroupbox("Menu Settings", "wrench")
+
+MenuGroup:AddButton("Unload HG Gui", function()
+    Library:Unload()
+end)
+
+-- Theme & Save Manager
+ThemeManager:SetLibrary(Library)
+SaveManager:SetLibrary(Library)
+SaveManager:IgnoreThemeSettings()
+SaveManager:SetIgnoreIndexes({ "MenuKeybind" })
+
+ThemeManager:SetFolder("HGGui")
+SaveManager:SetFolder("HGGui")
+
+ThemeManager:ApplyToTab(Tabs["UI Settings"])
+SaveManager:BuildConfigSection(Tabs["UI Settings"])
+
+SaveManager:LoadAutoloadConfig()
+
+-- Cleanup
+Library:OnUnload(function()
+    if oneButtonScreenGui then
+        oneButtonScreenGui:Destroy()
+    end
+    if farmAllConnection then
+        task.cancel(farmAllConnection)
+    end
+    print("HG Gui đã unload!")
+end)
+
+print("✅ HG Gui loaded successfully | Made by HenGi")
