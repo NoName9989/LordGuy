@@ -1,0 +1,361 @@
+repeat task.wait() until game:IsLoaded()
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
+local VIM = game:GetService("VirtualInputManager")
+local Camera = workspace.CurrentCamera
+local LocalPlayer = Players.LocalPlayer
+
+local Toggles = {
+AutoTaunt=false,
+Aim=false,
+AutoKill=false,
+NoClip=false,
+ESP=false
+}
+
+-- GUI
+local gui = Instance.new("ScreenGui",game.CoreGui)
+gui.ResetOnSpawn=false
+gui.Name="LordCat"
+
+local main = Instance.new("Frame",gui)
+main.Size = UDim2.new(0,380,0,270)
+main.Position = UDim2.new(0.5,-190,0.5,-135)
+main.BackgroundColor3 = Color3.fromRGB(20,20,25)
+main.BorderSizePixel=0
+main.Active=true
+main.Draggable=true
+Instance.new("UICorner",main).CornerRadius=UDim.new(0,8)
+
+-- top
+local top = Instance.new("Frame",main)
+top.Size = UDim2.new(1,0,0,30)
+top.BackgroundTransparency=1
+top.Active=true
+top.Draggable=true
+
+local title = Instance.new("TextLabel",top)
+title.Size = UDim2.new(1,0,1,0)
+title.BackgroundTransparency=1
+title.Text="LordCat - zoo or oof"
+title.Font=Enum.Font.GothamBold
+title.TextSize=12
+title.TextColor3=Color3.new(1,1,1)
+
+local close = Instance.new("TextButton",top)
+close.Size=UDim2.new(0,28,1,0)
+close.Position=UDim2.new(1,-28,0,0)
+close.Text="X"
+close.Font=Enum.Font.GothamBold
+close.TextColor3=Color3.new(1,1,1)
+close.BackgroundColor3=Color3.fromRGB(200,60,60)
+Instance.new("UICorner",close)
+
+local mini = Instance.new("TextButton",top)
+mini.Size=UDim2.new(0,28,1,0)
+mini.Position=UDim2.new(1,-56,0,0)
+mini.Text="-"
+mini.Font=Enum.Font.GothamBold
+mini.TextColor3=Color3.new(1,1,1)
+mini.BackgroundColor3=Color3.fromRGB(60,60,60)
+Instance.new("UICorner",mini)
+
+close.MouseButton1Click:Connect(function()
+gui:Destroy()
+end)
+
+-- tabs container
+local tabButtons = Instance.new("Frame",main)
+tabButtons.Size=UDim2.new(0,100,1,-30)
+tabButtons.Position=UDim2.new(0,0,0,30)
+tabButtons.BackgroundColor3=Color3.fromRGB(15,15,20)
+Instance.new("UICorner",tabButtons)
+
+local content = Instance.new("Frame",main)
+content.Size=UDim2.new(1,-100,1,-30)
+content.Position=UDim2.new(0,100,0,30)
+content.BackgroundTransparency=1
+
+-- minimize
+local minimized=false
+local oldSize=main.Size
+
+mini.MouseButton1Click:Connect(function()
+minimized=not minimized
+if minimized then
+oldSize=main.Size
+main.Size=UDim2.new(0,380,0,30)
+tabButtons.Visible=false
+content.Visible=false
+else
+main.Size=oldSize
+tabButtons.Visible=true
+content.Visible=true
+end
+end)
+
+-- tabs
+local pages={}
+local list=Instance.new("UIListLayout",tabButtons)
+list.Padding=UDim.new(0,4)
+
+local function newTab(name)
+local btn=Instance.new("TextButton",tabButtons)
+btn.Size=UDim2.new(1,-6,0,28)
+btn.Text=name
+btn.Font=Enum.Font.GothamBold
+btn.TextSize=11
+btn.TextColor3=Color3.new(1,1,1)
+btn.BackgroundColor3=Color3.fromRGB(30,30,35)
+Instance.new("UICorner",btn)
+
+local page=Instance.new("Frame",content)
+page.Size=UDim2.new(1,0,1,0)
+page.Visible=false
+page.BackgroundTransparency=1
+
+btn.MouseButton1Click:Connect(function()
+for _,p in pairs(pages) do
+p.Visible=false
+end
+page.Visible=true
+end)
+
+table.insert(pages,page)
+return page
+end
+
+local function newButton(parent,text,callback)
+local b=Instance.new("TextButton",parent)
+b.Size=UDim2.new(0,160,0,26)
+b.Text=text
+b.Font=Enum.Font.GothamBold
+b.TextSize=11
+b.TextColor3=Color3.new(1,1,1)
+b.BackgroundColor3=Color3.fromRGB(35,35,45)
+Instance.new("UICorner",b)
+b.MouseButton1Click:Connect(callback)
+return b
+end
+
+local function newToggle(parent,text,flag)
+local t=Instance.new("TextButton",parent)
+t.Size=UDim2.new(0,160,0,26)
+t.Text=text.." : OFF"
+t.Font=Enum.Font.GothamBold
+t.TextSize=11
+t.TextColor3=Color3.new(1,1,1)
+t.BackgroundColor3=Color3.fromRGB(35,35,45)
+Instance.new("UICorner",t)
+
+t.MouseButton1Click:Connect(function()
+Toggles[flag]=not Toggles[flag]
+t.Text=text.." : "..(Toggles[flag] and "ON" or "OFF")
+end)
+
+return t
+end
+
+-- tabs
+local animals=newTab("Animals")
+local zoo=newTab("Zookeeper")
+local misc=newTab("Misc")
+pages[1].Visible=true
+
+Instance.new("UIListLayout",animals).Padding=UDim.new(0,5)
+Instance.new("UIListLayout",zoo).Padding=UDim.new(0,5)
+Instance.new("UIListLayout",misc).Padding=UDim.new(0,5)
+
+-- Animals
+newButton(animals,"Teleport safe zone",function()
+local target = workspace.Lobby.Lobby.Visual.Props.Visual.fountain:GetChildren()[45]
+local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local hrp = char:WaitForChild("HumanoidRootPart")
+
+if target:IsA("BasePart") then
+hrp.CFrame = target.CFrame + Vector3.new(0,3,0)
+elseif target:FindFirstChildWhichIsA("BasePart") then
+hrp.CFrame = target:FindFirstChildWhichIsA("BasePart").CFrame + Vector3.new(0,3,0)
+end
+end)
+
+newToggle(animals,"Auto Taunt","AutoTaunt")
+
+task.spawn(function()
+while true do
+if Toggles.AutoTaunt then
+game.ReplicatedStorage.Net:FireServer("Taunt.play")
+end
+task.wait(3)
+end
+end)
+
+-- AIM
+local function getTarget()
+local closest,dist=nil,math.huge
+for _,player in pairs(Players:GetPlayers()) do
+if player~=LocalPlayer then
+local char=player.Character
+if char then
+local hum=char:FindFirstChildOfClass("Humanoid")
+local head=char:FindFirstChild("Head")
+if hum and hum.Health>0 and head then
+local pos,vis=Camera:WorldToViewportPoint(head.Position)
+if vis then
+local mag=(Vector2.new(pos.X,pos.Y)-UIS:GetMouseLocation()).Magnitude
+if mag<dist then
+dist=mag
+closest=head
+end end end end end end
+return closest
+end
+
+RunService.RenderStepped:Connect(function()
+if Toggles.Aim then
+local t=getTarget()
+if t then
+Camera.CFrame=Camera.CFrame:Lerp(
+CFrame.new(Camera.CFrame.Position,t.Position),
+0.15
+)
+end
+end
+end)
+
+newToggle(zoo,"Aim","Aim")
+
+-- AUTO KILL
+local function getAnimal()
+local animals=workspace.Gameplay.Dynamic.Animals
+for _,v in pairs(animals:GetDescendants()) do
+if v:IsA("BasePart") then
+return v
+end end
+end
+
+task.spawn(function()
+while true do
+if Toggles.AutoKill then
+VIM:SendMouseButtonEvent(0,0,0,true,game,0)
+VIM:SendMouseButtonEvent(0,0,0,false,game,0)
+end
+task.wait(0.05)
+end
+end)
+
+RunService.RenderStepped:Connect(function()
+if not Toggles.AutoKill then return end
+
+local part=getAnimal()
+local char=LocalPlayer.Character
+if not part or not char then return end
+
+local hrp=char:FindFirstChild("HumanoidRootPart")
+if not hrp then return end
+
+local targetPos=part.Position
+local offset=(hrp.Position-targetPos).Unit*4+Vector3.new(0,2,0)
+local newPos=targetPos+offset
+
+hrp.CFrame=hrp.CFrame:Lerp(
+CFrame.new(newPos,targetPos),
+0.25
+)
+end)
+
+newToggle(zoo,"Auto Kill","AutoKill")
+
+-- NOCLIP FIX
+newToggle(misc,"No Clip","NoClip")
+
+RunService.Stepped:Connect(function()
+local char=LocalPlayer.Character
+if not char then return end
+
+if Toggles.NoClip then
+for _,v in pairs(char:GetDescendants()) do
+if v:IsA("BasePart") then
+v.CanCollide=false
+end end
+else
+for _,v in pairs(char:GetDescendants()) do
+if v:IsA("BasePart") then
+v.CanCollide=true
+end end
+end
+
+end)
+
+-- ESP ANIMAL
+newToggle(misc,"ESP Animal","ESP")
+
+local ESP={}
+local TR={}
+
+RunService.RenderStepped:Connect(function()
+
+local folder=workspace.Gameplay.Dynamic.Animals
+local char=LocalPlayer.Character
+if not char then return end
+local root=char:FindFirstChild("HumanoidRootPart")
+if not root then return end
+
+-- remove deleted
+for part,_ in pairs(ESP) do
+if not part or not part.Parent then
+ESP[part]:Destroy()
+TR[part]:Remove()
+ESP[part]=nil
+TR[part]=nil
+end
+end
+
+if not Toggles.ESP then
+for _,v in pairs(ESP) do v.Enabled=false end
+for _,v in pairs(TR) do v.Visible=false end
+return
+end
+
+for _,model in pairs(folder:GetChildren()) do
+local base = model:IsA("BasePart") and model or model:FindFirstChildWhichIsA("BasePart")
+
+if base then
+
+if not ESP[base] then
+local h=Instance.new("Highlight")
+h.FillColor=Color3.fromRGB(255,0,0)
+h.OutlineColor=Color3.new(1,1,1)
+h.FillTransparency=0.5
+h.DepthMode=Enum.HighlightDepthMode.AlwaysOnTop
+h.Adornee=base
+h.Parent=game.CoreGui
+ESP[base]=h
+end
+
+if not TR[base] then
+local l=Drawing.new("Line")
+l.Thickness=2
+l.Color=Color3.new(1,1,1)
+l.Transparency=1
+TR[base]=l
+end
+
+local pos,vis=Camera:WorldToViewportPoint(base.Position)
+local my=Camera:WorldToViewportPoint(root.Position)
+
+if vis then
+TR[base].From=Vector2.new(my.X,my.Y)
+TR[base].To=Vector2.new(pos.X,pos.Y)
+TR[base].Visible=true
+else
+TR[base].Visible=false
+end
+
+ESP[base].Enabled=true
+
+end
+end
+
+end)
