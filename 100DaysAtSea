@@ -238,16 +238,16 @@ OneButtonToggle:OnChanged(function(state)
 end)
 
 -- ================== TAB 2: TELEPORT ==================
-local TeleportTab = Tabs.Teleport or Window:AddTab("Teleport", "map")  -- Nếu chưa có thì tạo mới
-
+local TeleportTab = Tabs.Teleport or Window:AddTab("Teleport", "map")
 local TeleportGroup = TeleportTab:AddLeftGroupbox("Teleport Islands", "map-pin")
 
 local player = game.Players.LocalPlayer
 
-local function SafeTeleport(cf)
+-- Hàm Teleport an toàn (dùng chung)
+local function SafeTeleport(targetCFrame, locationName)
     local character = player.Character
     if not character then 
-        Library:Notify({Title = "HG Gui", Description = "Character chưa load!", Time = 3})
+        Library:Notify({Title = "HG Gui", Description = "Chưa load nhân vật!", Time = 3})
         return 
     end
     
@@ -257,9 +257,23 @@ local function SafeTeleport(cf)
         return 
     end
 
-    root.CFrame = cf * CFrame.new(0, 5, 0)  -- Teleport lên trên 5 stud để tránh rơi
-    Library:Notify({Title = "HG Gui", Description = "Đã teleport!", Time = 2})
+    root.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+    root.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+
+    -- Offset cao để tránh dính vật cản
+    local safeCFrame = targetCFrame * CFrame.new(0, 22, 10)
+
+    character:PivotTo(safeCFrame)
+
+    task.wait(0.15)
+    if root then
+        root.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+    end
+
+    Library:Notify({Title = "HG Gui", Description = "✅ Đã TP đến " .. locationName, Time = 2.5})
 end
+
+-- ================== CÁC NÚT TELEPORT THỦ CÔNG ==================
 
 -- Home
 TeleportGroup:AddButton({
@@ -267,9 +281,9 @@ TeleportGroup:AddButton({
     Func = function()
         local spawnLoc = workspace:FindFirstChild("SpawnLocation")
         if spawnLoc then
-            SafeTeleport(spawnLoc.CFrame)
+            SafeTeleport(spawnLoc.CFrame, "Home")
         else
-            Library:Notify({Title = "HG Gui", Description = "Không tìm thấy SpawnLocation!", Time = 3})
+            Library:Notify({Title = "HG Gui", Description = "Không tìm thấy Home!", Time = 3})
         end
     end,
 })
@@ -279,10 +293,9 @@ TeleportGroup:AddButton({
     Text = "🌴 Tutorial Island",
     Func = function()
         local island = workspace.IslandContainer:FindFirstChild("TutorialIsland")
-        if island and island.PrimaryPart then
-            SafeTeleport(island.PrimaryPart.CFrame)
-        elseif island then
-            SafeTeleport(island:GetPivot())
+        if island then
+            local cf = island.PrimaryPart and island.PrimaryPart.CFrame or island:GetPivot()
+            SafeTeleport(cf, "Tutorial Island")
         else
             Library:Notify({Title = "HG Gui", Description = "Không tìm thấy TutorialIsland!", Time = 3})
         end
@@ -294,10 +307,9 @@ TeleportGroup:AddButton({
     Text = "⛩️ Temple Island",
     Func = function()
         local island = workspace.IslandContainer:FindFirstChild("TempleIsland")
-        if island and island.PrimaryPart then
-            SafeTeleport(island.PrimaryPart.CFrame)
-        elseif island then
-            SafeTeleport(island:GetPivot())
+        if island then
+            local cf = island.PrimaryPart and island.PrimaryPart.CFrame or island:GetPivot()
+            SafeTeleport(cf, "Temple Island")
         else
             Library:Notify({Title = "HG Gui", Description = "Không tìm thấy TempleIsland!", Time = 3})
         end
@@ -309,34 +321,70 @@ TeleportGroup:AddButton({
     Text = "🗝️ Cage Island",
     Func = function()
         local island = workspace.IslandContainer:FindFirstChild("CageIsland")
-        if island and island.PrimaryPart then
-            SafeTeleport(island.PrimaryPart.CFrame)
-        elseif island then
-            SafeTeleport(island:GetPivot())
+        if island then
+            local cf = island.PrimaryPart and island.PrimaryPart.CFrame or island:GetPivot()
+            SafeTeleport(cf, "Cage Island")
         else
             Library:Notify({Title = "HG Gui", Description = "Không tìm thấy CageIsland!", Time = 3})
         end
     end,
 })
 
--- Ancient Lighthouse
+-- Ancient Lighthouse (Nút thủ công)
 TeleportGroup:AddButton({
     Text = "🏮 Ancient Lighthouse",
     Func = function()
         local island = workspace.IslandContainer:FindFirstChild("AncientLighthouse")
-        if island and island.PrimaryPart then
-            SafeTeleport(island.PrimaryPart.CFrame)
-        elseif island then
-            SafeTeleport(island:GetPivot())
+        if island then
+            local cf = island.PrimaryPart and island.PrimaryPart.CFrame or island:GetPivot()
+            SafeTeleport(cf, "Ancient Lighthouse")
         else
             Library:Notify({Title = "HG Gui", Description = "Không tìm thấy AncientLighthouse!", Time = 3})
         end
     end,
 })
 
--- Divider và thông báo
+-- ================== TOGGLE AUTO TP ANCIENT LIGHTHOUSE ==================
 TeleportGroup:AddDivider()
-TeleportGroup:AddLabel("Click vào nút để teleport", true)
+TeleportGroup:AddLabel("Auto Teleport", true)
+
+local AutoTPAncientToggle = TeleportGroup:AddToggle("AutoTPAncient", {
+    Text = "🔄 Auto TP Ancient Lighthouse",
+    Default = false,
+    Tooltip = "Bật để tự động teleport liên tục đến Ancient Lighthouse",
+})
+
+local autoTPConnection = nil
+
+AutoTPAncientToggle:OnChanged(function(state)
+    if state then
+        Library:Notify({Title = "HG Gui", Description = "Auto TP Ancient Lighthouse BẬT", Time = 3})
+        
+        autoTPConnection = task.spawn(function()
+            while AutoTPAncientToggle.Value and not Library.Unloaded do
+                local island = workspace.IslandContainer:FindFirstChild("AncientLighthouse")
+                if island then
+                    local cf = island.PrimaryPart and island.PrimaryPart.CFrame or island:GetPivot()
+                    SafeTeleport(cf, "Ancient Lighthouse (Auto)")
+                end
+                task.wait(5) -- Delay 5 giây giữa các lần TP
+            end
+        end)
+    else
+        Library:Notify({Title = "HG Gui", Description = "Auto TP Ancient Lighthouse TẮT", Time = 3})
+        if autoTPConnection then
+            task.cancel(autoTPConnection)
+            autoTPConnection = nil
+        end
+    end
+end)
+
+-- Cleanup khi unload GUI
+Library:OnUnload(function()
+    if autoTPConnection then
+        task.cancel(autoTPConnection)
+    end
+end)
 
 -- ================== UI SETTINGS ==================
 local MenuGroup = Tabs["UI Settings"]:AddLeftGroupbox("Menu Settings", "wrench")
