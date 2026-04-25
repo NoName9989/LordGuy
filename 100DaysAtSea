@@ -21,14 +21,14 @@ local Window = Library:CreateWindow({
 })
 
 local Tabs = {
-    Farm = Window:AddTab("Farm", "play"),
+    FarmTab = Window:AddTab("Farm", "play"),
     TeleportTab = Window:AddTab("Teleport", "map"),
     MiscTab = Window:AddTab("Misc", "more-horizontal"),
     ["UI Settings"] = Window:AddTab("UI Settings", "settings"),
 }
 
 -- ================== TAB FARM ==================
-local FarmLeft = Tabs.Farm:AddLeftGroupbox("Auto Chest", "boxes")
+local FarmLeft = Tabs.FarmTab:AddLeftGroupbox("Auto Chest", "boxes")
 
 -- Toggle 1: Auto Farm All Chest
 local AutoFarmAllToggle = FarmLeft:AddToggle("AutoFarmAll", {
@@ -371,8 +371,6 @@ TeleportGroup:AddButton({
     end,
 })
 
-TeleportGroup:AddDivider()
-TeleportGroup:AddLabel("Độ cao +200 | Tự bật Noclip 5 giây khi TP", true)
 
 -- ================== TAB 3: MISC ==================
 local MiscGroup = Tabs.MiscTab:AddLeftGroupbox("Miscellaneous", "tool")
