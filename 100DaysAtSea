@@ -237,6 +237,107 @@ OneButtonToggle:OnChanged(function(state)
     end
 end)
 
+-- ================== TAB 2: TELEPORT ==================
+local TeleportTab = Tabs.Teleport or Window:AddTab("Teleport", "map")  -- Nếu chưa có thì tạo mới
+
+local TeleportGroup = TeleportTab:AddLeftGroupbox("Teleport Islands", "map-pin")
+
+local player = game.Players.LocalPlayer
+
+local function SafeTeleport(cf)
+    local character = player.Character
+    if not character then 
+        Library:Notify({Title = "HG Gui", Description = "Character chưa load!", Time = 3})
+        return 
+    end
+    
+    local root = character:FindFirstChild("HumanoidRootPart")
+    if not root then 
+        Library:Notify({Title = "HG Gui", Description = "Không tìm thấy HumanoidRootPart!", Time = 3})
+        return 
+    end
+
+    root.CFrame = cf * CFrame.new(0, 5, 0)  -- Teleport lên trên 5 stud để tránh rơi
+    Library:Notify({Title = "HG Gui", Description = "Đã teleport!", Time = 2})
+end
+
+-- Home
+TeleportGroup:AddButton({
+    Text = "🏠 Home",
+    Func = function()
+        local spawnLoc = workspace:FindFirstChild("SpawnLocation")
+        if spawnLoc then
+            SafeTeleport(spawnLoc.CFrame)
+        else
+            Library:Notify({Title = "HG Gui", Description = "Không tìm thấy SpawnLocation!", Time = 3})
+        end
+    end,
+})
+
+-- Tutorial Island
+TeleportGroup:AddButton({
+    Text = "🌴 Tutorial Island",
+    Func = function()
+        local island = workspace.IslandContainer:FindFirstChild("TutorialIsland")
+        if island and island.PrimaryPart then
+            SafeTeleport(island.PrimaryPart.CFrame)
+        elseif island then
+            SafeTeleport(island:GetPivot())
+        else
+            Library:Notify({Title = "HG Gui", Description = "Không tìm thấy TutorialIsland!", Time = 3})
+        end
+    end,
+})
+
+-- Temple Island
+TeleportGroup:AddButton({
+    Text = "⛩️ Temple Island",
+    Func = function()
+        local island = workspace.IslandContainer:FindFirstChild("TempleIsland")
+        if island and island.PrimaryPart then
+            SafeTeleport(island.PrimaryPart.CFrame)
+        elseif island then
+            SafeTeleport(island:GetPivot())
+        else
+            Library:Notify({Title = "HG Gui", Description = "Không tìm thấy TempleIsland!", Time = 3})
+        end
+    end,
+})
+
+-- Cage Island
+TeleportGroup:AddButton({
+    Text = "🗝️ Cage Island",
+    Func = function()
+        local island = workspace.IslandContainer:FindFirstChild("CageIsland")
+        if island and island.PrimaryPart then
+            SafeTeleport(island.PrimaryPart.CFrame)
+        elseif island then
+            SafeTeleport(island:GetPivot())
+        else
+            Library:Notify({Title = "HG Gui", Description = "Không tìm thấy CageIsland!", Time = 3})
+        end
+    end,
+})
+
+-- Ancient Lighthouse
+TeleportGroup:AddButton({
+    Text = "🏮 Ancient Lighthouse",
+    Func = function()
+        local island = workspace.IslandContainer:FindFirstChild("AncientLighthouse")
+        if island and island.PrimaryPart then
+            SafeTeleport(island.PrimaryPart.CFrame)
+        elseif island then
+            SafeTeleport(island:GetPivot())
+        else
+            Library:Notify({Title = "HG Gui", Description = "Không tìm thấy AncientLighthouse!", Time = 3})
+        end
+    end,
+})
+
+-- Divider và thông báo
+TeleportGroup:AddDivider()
+TeleportGroup:AddLabel("Click vào nút để teleport", true)
+
 -- ================== UI SETTINGS ==================
 local MenuGroup = Tabs["UI Settings"]:AddLeftGroupbox("Menu Settings", "wrench")
 
