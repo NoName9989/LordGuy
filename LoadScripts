@@ -1,7 +1,8 @@
 local Scripts = {
     [103854444055060] = "https://raw.githubusercontent.com/NoName9989/LordGuy/refs/heads/main/Silent%20Assassins",
     [70411440483149] = "https://raw.githubusercontent.com/NoName9989/LordGuy/refs/heads/main/100DaysAtSea",
-    [139802517550914] = "https://raw.githubusercontent.com/NoName9989/LordGuy/refs/heads/main/100DaysAtSea"
+    [139802517550914] = "https://raw.githubusercontent.com/NoName9989/LordGuy/refs/heads/main/100DaysAtSea",
+    [139233844569220] = "https://raw.githubusercontent.com/NoName9989/LordGuy/refs/heads/main/ZooOrOof"
 }
 
 local TweenService = game:GetService("TweenService")
