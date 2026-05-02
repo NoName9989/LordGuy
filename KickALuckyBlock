@@ -437,6 +437,33 @@ task.spawn(function()
     end
 end)
 
+-- ==================== GROUP 4: REBIRTH (BÊN PHẢI) ====================
+local RebirthGroup = AutoTab:AddRightGroupbox("Rebirth")
+
+-- Toggle Auto Rebirth
+local isAutoRebirth = false
+
+RebirthGroup:AddToggle("AutoRebirthToggle", {
+    Text = "Auto Rebirth",
+    Default = false,
+    Callback = function(state)
+        isAutoRebirth = state
+    end,
+})
+
+-- ==================== AUTO REBIRTH LOGIC ====================
+task.spawn(function()
+    while true do
+        wait(1.5)   -- delay an toàn (có thể chỉnh thành 1 hoặc 2 nếu cần)
+        
+        if isAutoRebirth then
+            game:GetService("ReplicatedStorage"):WaitForChild("Shared")
+                :WaitForChild("Packages"):WaitForChild("Network")
+                :WaitForChild("rev_RebirthRequest"):FireServer()
+        end
+    end
+end)
+
 -- ==================== UI SETTINGS ====================
 local MenuGroup = Tabs["UI Settings"]:AddLeftGroupbox("Menu")
 
