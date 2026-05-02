@@ -269,21 +269,35 @@ function UnequipWeightOnce()
 end
 
 task.spawn(function()
-    local lastEquipTime = 0
+    local lastX2Time = 0
+
     while true do
-        wait(0.2)
+        wait(0.3)
+
         local player = game.Players.LocalPlayer
         local character = player.Character
-        if not character or not character:FindFirstChild("Humanoid") then continue end
+        if not character or not character:FindFirstChild("Humanoid") then 
+            wait(1)
+            continue 
+        end
 
-        if not isWeightFarming then continue end
+        local humanoid = character.Humanoid
 
-        -- Auto x2
-        if isAutoX2 then
+        -- Tự unequip khi tắt Weight Farm
+        if not isWeightFarming then
+            if character:FindFirstChildWhichIsA("Tool") then
+                humanoid:UnequipTools()
+            end
+            continue
+        end
+
+        -- ==================== AUTO X2 WEIGHT (chỉ bắn remote, không equip) ====================
+        if isAutoX2 and (tick() - lastX2Time >= x2Time) then
             game:GetService("ReplicatedStorage"):WaitForChild("Shared")
                 :WaitForChild("Packages"):WaitForChild("Network")
                 :WaitForChild("rev_TaviMishkal"):FireServer()
-           end
+
+            lastX2Time = tick()
         end
     end
 end)
