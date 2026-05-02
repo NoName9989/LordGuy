@@ -175,7 +175,7 @@ local WeightFarmGroup = Tabs.Farm:AddRightGroupbox("Weight Farm")
 
 local isWeightFarming = false
 local isAutoX2 = false
-local x2Time = 30   -- cố định 30 giây (đã xóa input)
+local x2Time = 30
 
 WeightFarmGroup:AddToggle("AutoWeightFarmToggle", {
     Text = "Enable Weight Farm",
@@ -198,46 +198,70 @@ WeightFarmGroup:AddToggle("AutoX2WeightToggle", {
 
 WeightFarmGroup:AddLabel("Note: Auto x2 Weight only works when Enable Weight Farm is enabled", true)
 
+-- ==================== WEIGHT FARM LOGIC (ĐÃ SỬA) ====================
 
--- ==================== WEIGHT FARM LOGIC ====================
-function UnequipWeightOnce()
-    local player = game.Players.LocalPlayer
-    local character = player.Character
+local function UnequipWeightOnce()
+    local character = game.Players.LocalPlayer.Character
     if character and character:FindFirstChild("Humanoid") then
         character.Humanoid:UnequipTools()
     end
 end
 
+-- Task 1: Auto X2 (rev_TaviMishkal) - loop theo ý bạn
 task.spawn(function()
-    local lastX2Time = 0
+    while true do
+        wait(0.2)
+        if isWeightFarming and isAutoX2 then
+            pcall(function()
+                game:GetService("ReplicatedStorage")
+                    :WaitForChild("Shared", 1)
+                    :WaitForChild("Packages", 1)
+                    :WaitForChild("Network", 1)
+                    :WaitForChild("rev_TaviMishkal", 1)
+                    :FireServer()
+            end)
+        end
+    end
+end)
+
+-- Task 2: Auto Equip + Re-equip mỗi 30 giây
+task.spawn(function()
+    local lastEquipTime = 0
+    local player = game.Players.LocalPlayer
+
+    -- Xử lý khi character respawn
+    player.CharacterAdded:Connect(function()
+        wait(0.5) -- chờ character load xong
+        lastEquipTime = 0 -- reset timer để equip ngay
+    end)
 
     while true do
-        wait(0.3)
+        wait(0.2)
+        if not isWeightFarming then continue end
 
-        local player = game.Players.LocalPlayer
         local character = player.Character
-        if not character or not character:FindFirstChild("Humanoid") then 
-            wait(1)
-            continue 
-        end
+        if not character or not character:FindFirstChild("Humanoid") then continue end
 
         local humanoid = character.Humanoid
+        local toolInBackpack = player.Backpack:FindFirstChild(SelectedWeightItem)
+        local toolInCharacter = character:FindFirstChild(SelectedWeightItem)
 
-        -- Tự unequip khi tắt Weight Farm
-        if not isWeightFarming then
-            if character:FindFirstChildWhichIsA("Tool") then
-                humanoid:UnequipTools()
-            end
-            continue
+        -- Equip ngay nếu chưa có tool
+        if toolInBackpack and not toolInCharacter then
+            humanoid:EquipTool(toolInBackpack)
         end
 
-        -- ==================== AUTO X2 WEIGHT (chỉ bắn remote, không equip) ====================
-        if isAutoX2 and (tick() - lastX2Time >= x2Time) then
-            game:GetService("ReplicatedStorage"):WaitForChild("Shared")
-                :WaitForChild("Packages"):WaitForChild("Network")
-                :WaitForChild("rev_TaviMishkal"):FireServer()
-
-            lastX2Time = tick()
+        -- Auto re-equip (ấn phím 1) mỗi 30 giây
+        if isAutoX2 and tick() - lastEquipTime >= x2Time then
+            -- Unequip trước rồi equip lại (đúng kiểu "nhấn phím 1")
+            if toolInCharacter then
+                humanoid:UnequipTools()
+                wait(0.1)
+            end
+            if toolInBackpack then
+                humanoid:EquipTool(toolInBackpack)
+            end
+            lastEquipTime = tick()
         end
     end
 end)
