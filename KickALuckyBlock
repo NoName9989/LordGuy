@@ -302,6 +302,69 @@ task.spawn(function()
     end
 end)
 
+-- ==================== GROUP 2: UPGRADE SPEED ====================
+local UpgradeGroup = AutoTab:AddLeftGroupbox("Upgrade Speed")
+
+local UpgradeSpeedLevel = 1
+
+UpgradeGroup:AddLabel("Upgrade Speed Level (1 - 100)")
+
+local SpeedSlider = UpgradeGroup:AddSlider("SpeedSlider", {
+    Text = "Upgrade Speed Level",
+    Default = 1,
+    Min = 1,
+    Max = 100,
+    Rounding = 0,
+    Callback = function(v) UpgradeSpeedLevel = v end,
+})
+
+local SpeedInput = UpgradeGroup:AddInput("SpeedInput", {
+    Default = "1",
+    Numeric = true,
+    Finished = true,
+    Placeholder = "1 - 100",
+    Callback = function(text)
+        local num = tonumber(text)
+        if num and num >= 1 and num <= 100 then
+            UpgradeSpeedLevel = num
+            SpeedSlider:SetValue(num)
+        else
+            UpgradeSpeedLevel = 1
+            SpeedSlider:SetValue(1)
+            SpeedInput:SetValue("1")
+        end
+    end,
+})
+
+Options.SpeedSlider:OnChanged(function()
+    local val = Options.SpeedSlider.Value
+    SpeedInput:SetValue(tostring(val))
+end)
+
+-- Nút Auto Upgrade Speed
+local isAutoUpgradeSpeed = false
+
+UpgradeGroup:AddToggle("AutoUpgradeSpeedToggle", {
+    Text = "Auto Upgrade Speed",
+    Default = false,
+    Callback = function(state)
+        isAutoUpgradeSpeed = state
+    end,
+})
+
+-- ==================== AUTO UPGRADE SPEED LOGIC ====================
+task.spawn(function()
+    while true do
+        wait(0.6)
+        if isAutoUpgradeSpeed then
+            local args = {UpgradeSpeedLevel}
+            game:GetService("ReplicatedStorage"):WaitForChild("Shared")
+                :WaitForChild("Packages"):WaitForChild("Network")
+                :WaitForChild("rev_SPEED_UPGRADE"):FireServer(unpack(args))
+        end
+    end
+end)
+
 -- ==================== UI SETTINGS ====================
 local MenuGroup = Tabs["UI Settings"]:AddLeftGroupbox("Menu")
 
