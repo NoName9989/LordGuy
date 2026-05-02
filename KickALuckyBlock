@@ -365,6 +365,77 @@ task.spawn(function()
     end
 end)
 
+-- ==================== GROUP 3: AUTO COLLECT MONEY ====================
+local CollectGroup = AutoTab:AddLeftGroupbox("Auto Collect Money")
+
+-- Dropdown Multi Select 1-30
+local SelectedCollectIDs = {}
+
+local CollectValues = {}
+for i = 1, 30 do
+    table.insert(CollectValues, tostring(i))
+end
+
+local CollectDropdown = CollectGroup:AddDropdown("CollectDropdown", {
+    Text = "Select Collect IDs (Multi)",
+    Values = CollectValues,
+    Default = {},
+    Multi = true,
+    Callback = function(Value)
+        SelectedCollectIDs = Value
+    end,
+})
+
+-- Toggle Auto Collect Selected
+local isAutoCollectSelected = false
+
+CollectGroup:AddToggle("AutoCollectSelectedToggle", {
+    Text = "Auto Collect Selected",
+    Default = false,
+    Callback = function(state)
+        isAutoCollectSelected = state
+    end,
+})
+
+-- Toggle Auto Collect All (1-30)
+local isAutoCollectAll = false
+
+CollectGroup:AddToggle("AutoCollectAllToggle", {
+    Text = "Auto Collect All (1-30)",
+    Default = false,
+    Callback = function(state)
+        isAutoCollectAll = state
+    end,
+})
+
+-- ==================== AUTO COLLECT LOGIC ====================
+task.spawn(function()
+    while true do
+        wait(1.0)
+        
+        -- Auto Collect Selected IDs
+        if isAutoCollectSelected and #SelectedCollectIDs > 0 then
+            for _, idStr in ipairs(SelectedCollectIDs) do
+                local id = tonumber(idStr)
+                if id then
+                    game:GetService("ReplicatedStorage"):WaitForChild("Shared")
+                        :WaitForChild("Packages"):WaitForChild("Network")
+                        :WaitForChild("rev_B_Collect"):FireServer(id)
+                end
+            end
+        end
+        
+        -- Auto Collect All (1-30)
+        if isAutoCollectAll then
+            for i = 1, 30 do
+                game:GetService("ReplicatedStorage"):WaitForChild("Shared")
+                    :WaitForChild("Packages"):WaitForChild("Network")
+                    :WaitForChild("rev_B_Collect"):FireServer(i)
+            end
+        end
+    end
+end)
+
 -- ==================== UI SETTINGS ====================
 local MenuGroup = Tabs["UI Settings"]:AddLeftGroupbox("Menu")
 
