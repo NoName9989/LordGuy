@@ -369,21 +369,17 @@ end)
 local CollectGroup = AutoTab:AddLeftGroupbox("Auto Collect Money")
 
 -- Dropdown Multi Select
-local SelectedCollectIDs = {}
-
 local CollectValues = {}
 for i = 1, 30 do
     table.insert(CollectValues, tostring(i))
 end
 
 local CollectDropdown = CollectGroup:AddDropdown("CollectDropdown", {
-    Text = "Select Collect Slot",
+    Text = "Select Collect Slot (Multi)",
     Values = CollectValues,
     Default = {},
     Multi = true,
-    Callback = function(Value)
-        SelectedCollectIDs = Value
-    end,
+    Callback = function() end   -- không cần lưu biến riêng
 })
 
 -- Toggle Auto Collect Selected
@@ -413,15 +409,18 @@ task.spawn(function()
     while true do
         wait(1.0)
         
-        -- Auto Collect Selected
-        if isAutoCollectSelected and #SelectedCollectIDs > 0 then
-            for _, idStr in ipairs(SelectedCollectIDs) do
-                local id = tonumber(idStr)
-                if id then
-                    game:GetService("ReplicatedStorage"):WaitForChild("Shared")
-                        :WaitForChild("Packages"):WaitForChild("Network")
-                        :WaitForChild("rev_B_Collect"):FireServer(id)
-                    wait(0.08)   -- delay nhỏ giữa mỗi lần collect để tránh spam server
+        -- Auto Collect Selected (đã fix)
+        if isAutoCollectSelected then
+            local selectedTable = Options.CollectDropdown.Value or {}
+            for idStr, isSelected in pairs(selectedTable) do
+                if isSelected then
+                    local id = tonumber(idStr)
+                    if id then
+                        game:GetService("ReplicatedStorage"):WaitForChild("Shared")
+                            :WaitForChild("Packages"):WaitForChild("Network")
+                            :WaitForChild("rev_B_Collect"):FireServer(id)
+                        wait(0.08)
+                    end
                 end
             end
         end
@@ -432,7 +431,7 @@ task.spawn(function()
                 game:GetService("ReplicatedStorage"):WaitForChild("Shared")
                     :WaitForChild("Packages"):WaitForChild("Network")
                     :WaitForChild("rev_B_Collect"):FireServer(i)
-                wait(0.08)   -- delay nhỏ giữa mỗi lần collect
+                wait(0.08)
             end
         end
     end
