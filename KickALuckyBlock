@@ -1,0 +1,322 @@
+-- ==================== LORDCAT GUI ====================
+local repo = "https://raw.githubusercontent.com/deividcomsono/Obsidian/main/"
+local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
+local ThemeManager = loadstring(game:HttpGet(repo .. "addons/ThemeManager.lua"))()
+local SaveManager = loadstring(game:HttpGet(repo .. "addons/SaveManager.lua"))()
+
+local Options = Library.Options
+
+local Window = Library:CreateWindow({
+    Title = "LordCat",
+    Footer = "Version 1.0",
+    Icon = 95816097006870,
+    NotifySide = "Right",
+    ShowCustomCursor = true,
+})
+
+local Tabs = {
+    Farm = Window:AddTab("Farm", "sword"),
+    ["UI Settings"] = Window:AddTab("UI Settings", "settings"),
+}
+
+-- ==================== KICK FARM SETTING ====================
+local KickFarmSettingGroup = Tabs.Farm:AddLeftGroupbox("Kick Farm Setting")
+
+local KickRatio = 1
+local FarmDelay = 1
+local MoveDelay = 5
+
+KickFarmSettingGroup:AddLabel("Kick Ratio (0.1 - 1.0)")
+
+local RatioSlider = KickFarmSettingGroup:AddSlider("RatioSlider", {
+    Text = "Kick Ratio",
+    Default = 1,
+    Min = 0.1,
+    Max = 1,
+    Rounding = 4,
+    Callback = function(v) KickRatio = v end,
+})
+
+local RatioInput = KickFarmSettingGroup:AddInput("RatioInput", {
+    Default = "1",
+    Numeric = true,
+    Finished = true,
+    Placeholder = "0.1 - 1.0",
+    Callback = function(text)
+        local num = tonumber(text)
+        if num and num >= 0.1 and num <= 1 then
+            KickRatio = num
+            RatioSlider:SetValue(num)
+        else
+            KickRatio = 1
+            RatioSlider:SetValue(1)
+            RatioInput:SetValue("1")
+        end
+    end,
+})
+
+Options.RatioSlider:OnChanged(function()
+    local val = Options.RatioSlider.Value
+    RatioInput:SetValue(val == 1 and "1" or string.format("%.4f", val))
+end)
+
+KickFarmSettingGroup:AddDivider()
+
+KickFarmSettingGroup:AddLabel("Farm Delay (1 - 10 seconds)")
+
+local DelaySlider = KickFarmSettingGroup:AddSlider("DelaySlider", {
+    Text = "Farm Delay",
+    Default = 1,
+    Min = 1,
+    Max = 10,
+    Rounding = 1,
+    Callback = function(v) FarmDelay = v end,
+})
+
+local DelayInput = KickFarmSettingGroup:AddInput("DelayInput", {
+    Default = "1",
+    Numeric = true,
+    Finished = true,
+    Placeholder = "1 - 10",
+    Callback = function(text)
+        local num = tonumber(text)
+        if num and num >= 1 and num <= 10 then
+            FarmDelay = num
+            DelaySlider:SetValue(num)
+        else
+            FarmDelay = 1
+            DelaySlider:SetValue(1)
+            DelayInput:SetValue("1")
+        end
+    end,
+})
+
+Options.DelaySlider:OnChanged(function()
+    local val = Options.DelaySlider.Value
+    DelayInput:SetValue(val == 1 and "1" or string.format("%.1f", val))
+end)
+
+KickFarmSettingGroup:AddDivider()
+
+KickFarmSettingGroup:AddLabel("Delay Before Walk (1 - 60 seconds)")
+
+local MoveDelaySlider = KickFarmSettingGroup:AddSlider("MoveDelaySlider", {
+    Text = "Delay Before Walk",
+    Default = 5,
+    Min = 1,
+    Max = 60,
+    Rounding = 1,
+    Callback = function(v) MoveDelay = v end,
+})
+
+local MoveDelayInput = KickFarmSettingGroup:AddInput("MoveDelayInput", {
+    Default = "5",
+    Numeric = true,
+    Finished = true,
+    Placeholder = "1 - 60",
+    Callback = function(text)
+        local num = tonumber(text)
+        if num and num >= 1 and num <= 60 then
+            MoveDelay = num
+            MoveDelaySlider:SetValue(num)
+        else
+            MoveDelay = 5
+            MoveDelaySlider:SetValue(5)
+            MoveDelayInput:SetValue("5")
+        end
+    end,
+})
+
+Options.MoveDelaySlider:OnChanged(function()
+    local val = Options.MoveDelaySlider.Value
+    MoveDelayInput:SetValue(val == 5 and "5" or string.format("%.0f", val))
+end)
+
+-- ==================== KICK FARM ====================
+local KickFarmGroup = Tabs.Farm:AddLeftGroupbox("Kick Farm")
+
+local isKickFarming = false
+local kickTask = nil
+
+KickFarmGroup:AddToggle("AutoKickFarmToggle", {
+    Text = "Enable Kick Farm",
+    Default = false,
+    Callback = function(state)
+        isKickFarming = state
+        if state then
+            if kickTask then kickTask:Cancel() end
+            kickTask = task.spawn(StartKickFarm)
+        end
+    end,
+})
+
+-- ==================== WEIGHT FARM SETTING ====================
+local WeightFarmSettingGroup = Tabs.Farm:AddRightGroupbox("Weight Farm Setting")
+
+local SelectedWeightItem = "Wooden Stick"
+
+WeightFarmSettingGroup:AddDropdown("WeightItemDropdown", {
+    Text = "Select Weight Item",
+    Values = {
+        "Wooden Stick", "Bone Barbell", "Stone Block", "Copper Plate",
+        "Iron Plate", "Ice Barbell", "Donut Barbell", "Golden Barhell",
+        "Heaven Plate", "Mega Golden Barbell", "Neon Pulse", "Giant Gold Star Barbell"
+    },
+    Default = 1,
+    Multi = false,
+    Callback = function(Value)
+        SelectedWeightItem = Value
+    end,
+})
+
+-- ==================== WEIGHT FARM ====================
+local WeightFarmGroup = Tabs.Farm:AddRightGroupbox("Weight Farm")
+
+local isWeightFarming = false
+local isAutoX2 = false
+local x2Time = 30   -- cố định 30 giây (đã xóa input)
+
+WeightFarmGroup:AddToggle("AutoWeightFarmToggle", {
+    Text = "Enable Weight Farm",
+    Default = false,
+    Callback = function(state)
+        isWeightFarming = state
+        if not state then
+            UnequipWeightOnce()
+        end
+    end,
+})
+
+WeightFarmGroup:AddToggle("AutoX2WeightToggle", {
+    Text = "Auto x2 Weight",
+    Default = false,
+    Callback = function(state)
+        isAutoX2 = state
+    end,
+})
+
+WeightFarmGroup:AddLabel("Note: Auto x2 Weight only works when Enable Weight Farm is enabled", true)
+
+-- ==================== KICK FARM LOGIC ====================
+function StartKickFarm()
+    while isKickFarming do
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local root = character:WaitForChild("HumanoidRootPart")
+        local humanoid = character:WaitForChild("Humanoid")
+
+        local function teleport(pos)
+            root.CFrame = CFrame.new(pos)
+        end
+
+        teleport(Vector3.new(690.45, 2.99, 231.49))
+        wait(1)
+
+        local args = {KickRatio}
+        game:GetService("ReplicatedStorage"):WaitForChild("Shared")
+            :WaitForChild("Packages"):WaitForChild("Network")
+            :WaitForChild("rev_KickEvent"):FireServer(unpack(args))
+        wait(1)
+
+        local waveFolder = workspace:WaitForChild("Waves")
+        local waveDetected = false
+        local conn = waveFolder.ChildAdded:Connect(function(child)
+            if child:IsA("Model") or child:IsA("Folder") then waveDetected = true end
+        end)
+
+        local start = tick()
+        repeat
+            wait(0.5)
+            if tick() - start > 60 then break end
+        until waveDetected or not isKickFarming
+
+        conn:Disconnect()
+        if not isKickFarming then break end
+
+        wait(4)
+
+        teleport(Vector3.new(674.96, -7.00, 232.41))
+        wait(MoveDelay)
+
+        local target = Vector3.new(699.77, 3.00, 231.99)
+        humanoid:MoveTo(target)
+
+        local arrived = false
+        local startTime = tick()
+        while isKickFarming and tick() - startTime < 20 do
+            if (root.Position - target).Magnitude < 5 then
+                arrived = true
+                break
+            end
+            wait(0.2)
+        end
+
+        if arrived then humanoid:MoveTo(root.Position) end
+
+        if isKickFarming then wait(FarmDelay) end
+    end
+    kickTask = nil
+end
+
+-- ==================== WEIGHT FARM LOGIC ====================
+function UnequipWeightOnce()
+    local player = game.Players.LocalPlayer
+    local character = player.Character
+    if character and character:FindFirstChild("Humanoid") then
+        character.Humanoid:UnequipTools()
+    end
+end
+
+task.spawn(function()
+    local lastEquipTime = 0
+    while true do
+        wait(0.2)
+        local player = game.Players.LocalPlayer
+        local character = player.Character
+        if not character or not character:FindFirstChild("Humanoid") then continue end
+
+        if not isWeightFarming then continue end
+
+        -- Auto x2
+        if isAutoX2 then
+            game:GetService("ReplicatedStorage"):WaitForChild("Shared")
+                :WaitForChild("Packages"):WaitForChild("Network")
+                :WaitForChild("rev_TaviMishkal"):FireServer()
+        end
+
+        -- Equip item (Key 1)
+        local item = player.Backpack:FindFirstChild(SelectedWeightItem)
+        if item then
+            character.Humanoid:EquipTool(item)
+        end
+
+        -- X2 Equip theo thời gian
+        if isAutoX2 and tick() - lastEquipTime >= x2Time then
+            if item then
+                character.Humanoid:EquipTool(item)
+                lastEquipTime = tick()
+            end
+        end
+    end
+end)
+
+-- ==================== UI SETTINGS ====================
+local MenuGroup = Tabs["UI Settings"]:AddLeftGroupbox("Menu")
+
+MenuGroup:AddButton("Unload GUI", function()
+    Library:Unload()
+end)
+
+MenuGroup:AddLabel("Menu Bind"):AddKeyPicker("MenuKeybind", {
+    Default = "RightShift",
+    NoUI = true,
+})
+
+Library.ToggleKeybind = Options.MenuKeybind
+
+ThemeManager:SetLibrary(Library)
+SaveManager:SetLibrary(Library)
+ThemeManager:SetFolder("LordCat")
+SaveManager:SetFolder("LordCat")
+ThemeManager:ApplyToTab(Tabs["UI Settings"])
+SaveManager:BuildConfigSection(Tabs["UI Settings"])
