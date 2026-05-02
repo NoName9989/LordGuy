@@ -16,6 +16,7 @@ local Window = Library:CreateWindow({
 
 local Tabs = {
     Farm = Window:AddTab("Farm", "sword"),
+    Automatic = Window:AddTab("Automatic", "bolt"),
     ["UI Settings"] = Window:AddTab("UI Settings", "settings"),
 }
 
@@ -296,6 +297,48 @@ task.spawn(function()
                 character.Humanoid:EquipTool(item)
                 lastEquipTime = tick()
             end
+        end
+    end
+end)
+
+-- ==================== AUTOMATIC TAB ====================
+local AutoTab = Tabs.Automatic
+
+local AutoLeft = AutoTab:AddLeftGroupbox("Automatic Features")
+local AutoRight = AutoTab:AddRightGroupbox("Automatic Settings")
+
+-- ==================== GROUP 1: SELL ====================
+local SellGroup = AutoLeft:AddLeftGroupbox("Sell")   -- ← Group 1: Sell (bên trái)
+
+-- Chức năng 1: Button Sell All
+SellGroup:AddButton({
+    Text = "Sell All",
+    Func = function()
+        game:GetService("ReplicatedStorage"):WaitForChild("Shared")
+            :WaitForChild("Packages"):WaitForChild("Network")
+            :WaitForChild("ref_B_SellAll"):InvokeServer()
+    end,
+})
+
+-- Chức năng 2: Toggle Sell Select (Auto Sell Selected)
+local isAutoSellSelect = false
+
+SellGroup:AddToggle("AutoSellSelectToggle", {
+    Text = "Sell Select",
+    Default = false,
+    Callback = function(state)
+        isAutoSellSelect = state
+    end,
+})
+
+-- ==================== AUTO SELL SELECT LOGIC ====================
+task.spawn(function()
+    while true do
+        wait(0.8)  -- delay an toàn, không spam
+        if isAutoSellSelect then
+            game:GetService("ReplicatedStorage"):WaitForChild("Shared")
+                :WaitForChild("Packages"):WaitForChild("Network")
+                :WaitForChild("ref_B_Sell"):InvokeServer()
         end
     end
 end)
