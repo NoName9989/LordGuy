@@ -463,6 +463,32 @@ task.spawn(function()
         end
     end
 end)
+-- ==================== GROUP 5: CLAIM OFFLINE MONEY (BÊN PHẢI) ====================
+local OfflineClaimGroup = AutoTab:AddRightGroupbox("Claim Offline Money")
+
+-- Toggle Auto Claim Offline Money
+local isAutoClaimOffline = false
+
+OfflineClaimGroup:AddToggle("AutoClaimOfflineToggle", {
+    Text = "Auto Claim",
+    Default = false,
+    Callback = function(state)
+        isAutoClaimOffline = state
+    end,
+})
+
+-- ==================== AUTO CLAIM OFFLINE LOGIC ====================
+task.spawn(function()
+    while true do
+        wait(2.0)   -- delay 2 giây (an toàn cho offline claim)
+        
+        if isAutoClaimOffline then
+            game:GetService("ReplicatedStorage"):WaitForChild("Shared")
+                :WaitForChild("Packages"):WaitForChild("Network")
+                :WaitForChild("rev_Offline_Claim"):FireServer()
+        end
+    end
+end)
 
 -- ==================== UI SETTINGS ====================
 local MenuGroup = Tabs["UI Settings"]:AddLeftGroupbox("Menu")
