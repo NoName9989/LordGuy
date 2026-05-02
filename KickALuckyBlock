@@ -291,11 +291,8 @@ end)
 -- ==================== AUTOMATIC TAB ====================
 local AutoTab = Tabs.Automatic
 
-local AutoLeft = AutoTab:AddLeftGroupbox("Automatic Features")
-local AutoRight = AutoTab:AddRightGroupbox("Automatic Settings")
-
 -- ==================== GROUP 1: SELL ====================
-local SellGroup = AutoLeft:AddLeftGroupbox("Sell")   -- ← Group 1: Sell (bên trái)
+local SellGroup = AutoTab:AddLeftGroupbox("Sell")  
 
 -- Chức năng 1: Button Sell All
 SellGroup:AddButton({
@@ -321,7 +318,7 @@ SellGroup:AddToggle("AutoSellSelectToggle", {
 -- ==================== AUTO SELL SELECT LOGIC ====================
 task.spawn(function()
     while true do
-        wait(0.8)  -- delay an toàn, không spam
+        wait(0.8)
         if isAutoSellSelect then
             game:GetService("ReplicatedStorage"):WaitForChild("Shared")
                 :WaitForChild("Packages"):WaitForChild("Network")
