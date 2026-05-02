@@ -283,20 +283,7 @@ task.spawn(function()
             game:GetService("ReplicatedStorage"):WaitForChild("Shared")
                 :WaitForChild("Packages"):WaitForChild("Network")
                 :WaitForChild("rev_TaviMishkal"):FireServer()
-        end
-
-        -- Equip item (Key 1)
-        local item = player.Backpack:FindFirstChild(SelectedWeightItem)
-        if item then
-            character.Humanoid:EquipTool(item)
-        end
-
-        -- X2 Equip theo thời gian
-        if isAutoX2 and tick() - lastEquipTime >= x2Time then
-            if item then
-                character.Humanoid:EquipTool(item)
-                lastEquipTime = tick()
-            end
+           end
         end
     end
 end)
