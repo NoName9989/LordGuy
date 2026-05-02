@@ -366,7 +366,7 @@ task.spawn(function()
 end)
 
 -- ==================== GROUP 3: AUTO COLLECT MONEY ====================
-local CollectGroup = AutoTab:AddLeftGroupbox("Auto Collect Money")
+local CollectGroup = AutoTab:AddRightGroupbox("Auto Collect Money")
 
 -- Dropdown Multi Select
 local CollectValues = {}
