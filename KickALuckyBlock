@@ -148,11 +148,79 @@ KickFarmGroup:AddToggle("AutoKickFarmToggle", {
     Callback = function(state)
         isKickFarming = state
         if state then
-            if kickTask then kickTask:Cancel() end
+            if kickTask then
+                task.cancel(kickTask)   -- ← SỬA Ở ĐÂY
+            end
             kickTask = task.spawn(StartKickFarm)
+        else
+            if kickTask then
+                task.cancel(kickTask)   -- ← Dừng khi tắt
+                kickTask = nil
+            end
         end
     end,
 })
+
+-- ==================== KICK FARM LOGIC ====================
+function StartKickFarm()
+    while isKickFarming do
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local root = character:WaitForChild("HumanoidRootPart")
+        local humanoid = character:WaitForChild("Humanoid")
+
+        local function teleport(pos)
+            root.CFrame = CFrame.new(pos)
+        end
+
+        teleport(Vector3.new(690.45, 2.99, 231.49))
+        wait(1)
+
+        local args = {KickRatio}
+        game:GetService("ReplicatedStorage"):WaitForChild("Shared")
+            :WaitForChild("Packages"):WaitForChild("Network")
+            :WaitForChild("rev_KickEvent"):FireServer(unpack(args))
+        wait(1)
+
+        local waveFolder = workspace:WaitForChild("Waves")
+        local waveDetected = false
+        local conn = waveFolder.ChildAdded:Connect(function(child)
+            if child:IsA("Model") or child:IsA("Folder") then waveDetected = true end
+        end)
+
+        local start = tick()
+        repeat
+            wait(0.5)
+            if tick() - start > 60 then break end
+        until waveDetected or not isKickFarming
+
+        conn:Disconnect()
+        if not isKickFarming then break end
+
+        wait(4)
+
+        teleport(Vector3.new(674.96, -7.00, 232.41))
+        wait(MoveDelay)
+
+        local target = Vector3.new(699.77, 3.00, 231.99)
+        humanoid:MoveTo(target)
+
+        local arrived = false
+        local startTime = tick()
+        while isKickFarming and tick() - startTime < 20 do
+            if (root.Position - target).Magnitude < 5 then
+                arrived = true
+                break
+            end
+            wait(0.2)
+        end
+
+        if arrived then humanoid:MoveTo(root.Position) end
+
+        if isKickFarming then wait(FarmDelay) end
+    end
+    kickTask = nil
+end
 
 -- ==================== WEIGHT FARM SETTING ====================
 local WeightFarmSettingGroup = Tabs.Farm:AddRightGroupbox("Weight Farm Setting")
