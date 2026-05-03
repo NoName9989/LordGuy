@@ -546,16 +546,28 @@ FPSGroup:AddButton("Boost FPS", function()
         end
     end
 
-    -- Tối ưu map giảm lag mạnh
+    -- 1. Giảm đồ họa
+    settings().Rendering.QualityLevel = 1
+
+    -- 2. Tắt shadow
+    game:GetService("Lighting").GlobalShadows = false
+
+    -- 3. Đơn giản hóa vật liệu toàn map
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v:IsA("BasePart") then
+            v.Material = Enum.Material.SmoothPlastic
+            v.Reflectance = 0
+        end
+    end
+
+    -- Tối ưu thêm (giảm lag mạnh hơn)
     pcall(function()
         workspace.StreamingEnabled = true
         workspace.Terrain.WaterWaveSize = 0
         workspace.Terrain.WaterWaveSpeed = 0
         workspace.Terrain.WaterReflectance = 0
         workspace.Terrain.WaterTransparency = 1
-        game.Lighting.GlobalShadows = false
         game.Lighting.FogEnd = 99999
-        settings().Rendering.QualityLevel = 1
         if workspace:FindFirstChild("Effects") then workspace.Effects:Destroy() end
         if workspace:FindFirstChild("Particles") then workspace.Particles:Destroy() end
     end)
@@ -564,7 +576,7 @@ end)
 -- ==================== GROUP 2: HIDE (PHẢI) ====================
 local HideGroup = FpsTab:AddRightGroupbox("Hide")
 
--- Hide Brainrot (Plot 1 đến 5)
+-- Hide Brainrot (Plot 1-5)
 HideGroup:AddButton("Hide Brainrot", function()
     for plotNum = 1, 5 do
         local plot = workspace.Plots:FindFirstChild("Plot" .. plotNum)
@@ -585,7 +597,7 @@ HideGroup:AddButton("Hide Brainrot", function()
     end
 end)
 
--- Destroy Decor (xóa luôn)
+-- Destroy Decor
 HideGroup:AddButton("Destroy Decor", function()
     local decor = workspace:FindFirstChild("Decor")
     if decor then
