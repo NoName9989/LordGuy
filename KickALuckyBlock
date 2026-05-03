@@ -562,7 +562,7 @@ end)
 -- ==================== GROUP 2: HIDE (PHẢI) ====================
 local HideGroup = FpsTab:AddRightGroupbox("Hide")
 
--- Hide Brainrot (Plot 1-5)
+-- Hide Brainrot (xoá hết con bên trong PlacedPart)
 HideGroup:AddButton("Hide Brainrot", function()
     for plotNum = 1, 5 do
         local plot = workspace.Plots:FindFirstChild("Plot" .. plotNum)
@@ -574,7 +574,9 @@ HideGroup:AddButton("Hide Brainrot", function()
                     if slot then
                         local placedPart = slot:FindFirstChild("PlacedPart")
                         if placedPart then
-                            placedPart:Destroy()
+                            for _, child in ipairs(placedPart:GetChildren()) do
+                                child:Destroy()
+                            end
                         end
                     end
                 end
@@ -583,7 +585,7 @@ HideGroup:AddButton("Hide Brainrot", function()
     end
 end)
 
--- Destroy Decor
+-- Destroy Decor (giữ nguyên)
 HideGroup:AddButton("Destroy Decor", function()
     local decor = workspace:FindFirstChild("Decor")
     if decor then
