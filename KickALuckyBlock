@@ -19,6 +19,7 @@ local Tabs = {
     Automatic = Window:AddTab("Automatic", "bolt"),
     Shop = Window:AddTab("Shop", "shopping-cart"),
     ["FPS Boost"] = Window:AddTab("FPS Boost", "zap"),
+    Misc = Window:AddTab("Misc", "more-horizontal"),
     ["UI Settings"] = Window:AddTab("UI Settings", "settings"),
 }
 
@@ -589,6 +590,180 @@ HideGroup:AddButton("Destroy Decor", function()
         decor:Destroy()
     end
 end)
+
+-- ==================== TAB MISC ====================
+local MiscTab = Tabs.Misc
+
+-- ==================== GROUP 1: SERVER (TRÁI) ====================
+local ServerGroup = MiscTab:AddLeftGroupbox("Server")
+
+ServerGroup:AddButton("Server Hop", function()
+    local TeleportService = game:GetService("TeleportService")
+    local placeId = game.PlaceId
+    TeleportService:Teleport(placeId)
+end)
+
+ServerGroup:AddButton("Rejoin", function()
+    local TeleportService = game:GetService("TeleportService")
+    TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, game.Players.LocalPlayer)
+end)
+
+ServerGroup:AddButton("Copy Server ID", function()
+    setclipboard(game.JobId)
+end)
+
+-- ==================== GROUP 2: PLAYER (PHẢI) ====================
+local PlayerGroup = MiscTab:AddRightGroupbox("Player")
+
+-- Infinite Jump
+local infiniteJumpConnection
+PlayerGroup:AddToggle("InfiniteJumpToggle", {
+    Text = "Infinite Jump",
+    Default = false,
+    Callback = function(state)
+        if state then
+            infiniteJumpConnection = game:GetService("UserInputService").JumpRequest:Connect(function()
+                game.Players.LocalPlayer.Character:WaitForChild("Humanoid"):ChangeState("Jumping")
+            end)
+        else
+            if infiniteJumpConnection then infiniteJumpConnection:Disconnect() end
+        end
+    end,
+})
+
+-- No Clip
+local noclipConnection
+PlayerGroup:AddToggle("NoClipToggle", {
+    Text = "No Clip",
+    Default = false,
+    Callback = function(state)
+        if state then
+            noclipConnection = game:GetService("RunService").Stepped:Connect(function()
+                if game.Players.LocalPlayer.Character then
+                    for _, part in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
+                        if part:IsA("BasePart") then
+                            part.CanCollide = false
+                        end
+                    end
+                end
+            end)
+        else
+            if noclipConnection then noclipConnection:Disconnect() end
+        end
+    end,
+})
+
+-- Click to Teleport
+local clickTPConnection
+PlayerGroup:AddToggle("ClickTPToggle", {
+    Text = "Click to Teleport",
+    Default = false,
+    Callback = function(state)
+        if state then
+            clickTPConnection = game:GetService("Mouse").Button1Down:Connect(function()
+                local mouse = game.Players.LocalPlayer:GetMouse()
+                local character = game.Players.LocalPlayer.Character
+                if character and character:FindFirstChild("HumanoidRootPart") then
+                    character.HumanoidRootPart.CFrame = CFrame.new(mouse.Hit.X, mouse.Hit.Y + 3, mouse.Hit.Z)
+                end
+            end)
+        else
+            if clickTPConnection then clickTPConnection:Disconnect() end
+        end
+    end,
+})
+
+-- ==================== GROUP 3: ESP (TRÁI) ====================
+local ESPGroup = MiscTab:AddLeftGroupbox("ESP")
+
+-- ESP Player
+local espPlayerConnection
+ESPGroup:AddToggle("ESPPlayerToggle", {
+    Text = "ESP Player",
+    Default = false,
+    Callback = function(state)
+        if state then
+            espPlayerConnection = game:GetService("RunService").RenderStepped:Connect(function()
+                for _, plr in pairs(game.Players:GetPlayers()) do
+                    if plr ~= game.Players.LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                        local root = plr.Character.HumanoidRootPart
+                        if not root:FindFirstChild("ESPHighlight") then
+                            local highlight = Instance.new("Highlight")
+                            highlight.Name = "ESPHighlight"
+                            highlight.FillColor = Color3.fromRGB(255, 0, 0)
+                            highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+                            highlight.FillTransparency = 0.5
+                            highlight.Parent = root
+                        end
+                    end
+                end
+            end)
+        else
+            if espPlayerConnection then espPlayerConnection:Disconnect() end
+            for _, plr in pairs(game.Players:GetPlayers()) do
+                if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                    local hl = plr.Character.HumanoidRootPart:FindFirstChild("ESPHighlight")
+                    if hl then hl:Destroy() end
+                end
+            end
+        end
+    end,
+})
+
+-- ESP Slots (Plot 1-5, Slot 1-30)
+local espSlotsConnection
+ESPGroup:AddToggle("ESPSlotsToggle", {
+    Text = "ESP Slots",
+    Default = false,
+    Callback = function(state)
+        if state then
+            espSlotsConnection = game:GetService("RunService").RenderStepped:Connect(function()
+                for plotNum = 1, 5 do
+                    local plot = workspace.Plots:FindFirstChild("Plot" .. plotNum)
+                    if plot then
+                        local slots = plot:FindFirstChild("Slots")
+                        if slots then
+                            for i = 1, 30 do
+                                local slot = slots:FindFirstChild("Slot" .. i)
+                                if slot then
+                                    local placed = slot:FindFirstChild("PlacedPart")
+                                    if placed and not placed:FindFirstChild("ESPHighlight") then
+                                        local highlight = Instance.new("Highlight")
+                                        highlight.Name = "ESPHighlight"
+                                        highlight.FillColor = Color3.fromRGB(0, 255, 0)
+                                        highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+                                        highlight.FillTransparency = 0.5
+                                        highlight.Parent = placed
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end)
+        else
+            if espSlotsConnection then espSlotsConnection:Disconnect() end
+            for plotNum = 1, 5 do
+                local plot = workspace.Plots:FindFirstChild("Plot" .. plotNum)
+                if plot then
+                    local slots = plot:FindFirstChild("Slots")
+                    if slots then
+                        for i = 1, 30 do
+                            local slot = slots:FindFirstChild("Slot" .. i)
+                            if slot then
+                                local placed = slot:FindFirstChild("PlacedPart")
+                                if placed then
+                                    local hl = placed:FindFirstChild("ESPHighlight")
+                                    if hl then hl:Destroy() end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end,
+})
 
 -- ==================== UI SETTINGS ====================
 local MenuGroup = Tabs["UI Settings"]:AddLeftGroupbox("Menu")
