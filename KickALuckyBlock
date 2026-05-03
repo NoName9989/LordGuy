@@ -17,6 +17,7 @@ local Window = Library:CreateWindow({
 local Tabs = {
     Farm = Window:AddTab("Farm", "sword"),
     Automatic = Window:AddTab("Automatic", "bolt"),
+    Shop = Window:AddTab("Shop", "shopping-cart"),
     ["UI Settings"] = Window:AddTab("UI Settings", "settings"),
 }
 
@@ -488,6 +489,45 @@ task.spawn(function()
                 :WaitForChild("rev_Offline_Claim"):FireServer()
         end
     end
+end)
+
+-- ==================== TAB SHOP - GROUP 1: WEIGHTS SHOP ====================
+local ShopTab = Tabs.Shop
+
+local WeightsShopGroup = ShopTab:AddLeftGroupbox("Weights Shop")
+
+local SelectedWeightShopItem = "Wooden Stick"
+
+-- Dropdown chọn item (giống tab Farm)
+WeightsShopGroup:AddDropdown("WeightShopDropdown", {
+    Text = "Select Weight Item",
+    Values = {
+        "Wooden Stick", "Bone Barbell", "Stone Block", "Copper Plate",
+        "Iron Plate", "Ice Barbell", "Donut Barbell", "Golden Barhell",
+        "Heaven Plate", "Mega Golden Barbell", "Neon Pulse", "Giant Gold Star Barbell"
+    },
+    Default = 1,
+    Multi = false,
+    Callback = function(Value)
+        SelectedWeightShopItem = Value
+    end,
+})
+
+-- Button Buy (mua + equip luôn)
+WeightsShopGroup:AddButton("Buy", function()
+    -- 1. Mua item từ shop
+    local buyArgs = {"WeightShop", SelectedWeightShopItem}
+    game:GetService("ReplicatedStorage"):WaitForChild("Shared")
+        :WaitForChild("Packages"):WaitForChild("Network")
+        :WaitForChild("rev_Shop_Buy"):FireServer(unpack(buyArgs))
+
+    wait(0.3) -- delay nhỏ để server xử lý mua
+
+    -- 2. Equip item
+    local equipArgs = {SelectedWeightShopItem}
+    game:GetService("ReplicatedStorage"):WaitForChild("Shared")
+        :WaitForChild("Packages"):WaitForChild("Network")
+        :WaitForChild("rev_WeightEquip"):FireServer(unpack(equipArgs))
 end)
 
 -- ==================== UI SETTINGS ====================
