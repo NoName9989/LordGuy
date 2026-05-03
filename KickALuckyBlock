@@ -598,18 +598,31 @@ local MiscTab = Tabs.Misc
 local ServerGroup = MiscTab:AddLeftGroupbox("Server")
 
 ServerGroup:AddButton("Server Hop", function()
-    local TeleportService = game:GetService("TeleportService")
-    local placeId = game.PlaceId
-    TeleportService:Teleport(placeId)
+    game:GetService("TeleportService"):Teleport(game.PlaceId)
 end)
 
 ServerGroup:AddButton("Rejoin", function()
-    local TeleportService = game:GetService("TeleportService")
-    TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, game.Players.LocalPlayer)
+    game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, game.Players.LocalPlayer)
 end)
 
 ServerGroup:AddButton("Copy Server ID", function()
     setclipboard(game.JobId)
+end)
+
+local ServerIDInput = ""
+ServerGroup:AddInput("ServerIDInput", {
+    Text = "Server ID",
+    Default = "",
+    Placeholder = "Paste JobId here",
+    Callback = function(text)
+        ServerIDInput = text
+    end,
+})
+
+ServerGroup:AddButton("Join Server ID", function()
+    if ServerIDInput and ServerIDInput ~= "" then
+        game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, ServerIDInput, game.Players.LocalPlayer)
+    end
 end)
 
 -- ==================== GROUP 2: PLAYER (PHẢI) ====================
@@ -623,7 +636,10 @@ PlayerGroup:AddToggle("InfiniteJumpToggle", {
     Callback = function(state)
         if state then
             infiniteJumpConnection = game:GetService("UserInputService").JumpRequest:Connect(function()
-                game.Players.LocalPlayer.Character:WaitForChild("Humanoid"):ChangeState("Jumping")
+                local char = game.Players.LocalPlayer.Character
+                if char and char:FindFirstChild("Humanoid") then
+                    char.Humanoid:ChangeState("Jumping")
+                end
             end)
         else
             if infiniteJumpConnection then infiniteJumpConnection:Disconnect() end
@@ -639,8 +655,9 @@ PlayerGroup:AddToggle("NoClipToggle", {
     Callback = function(state)
         if state then
             noclipConnection = game:GetService("RunService").Stepped:Connect(function()
-                if game.Players.LocalPlayer.Character then
-                    for _, part in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
+                local char = game.Players.LocalPlayer.Character
+                if char then
+                    for _, part in pairs(char:GetDescendants()) do
                         if part:IsA("BasePart") then
                             part.CanCollide = false
                         end
@@ -653,18 +670,18 @@ PlayerGroup:AddToggle("NoClipToggle", {
     end,
 })
 
--- Click to Teleport
+-- Click to Teleport (đã fix)
 local clickTPConnection
 PlayerGroup:AddToggle("ClickTPToggle", {
     Text = "Click to Teleport",
     Default = false,
     Callback = function(state)
         if state then
-            clickTPConnection = game:GetService("Mouse").Button1Down:Connect(function()
-                local mouse = game.Players.LocalPlayer:GetMouse()
-                local character = game.Players.LocalPlayer.Character
-                if character and character:FindFirstChild("HumanoidRootPart") then
-                    character.HumanoidRootPart.CFrame = CFrame.new(mouse.Hit.X, mouse.Hit.Y + 3, mouse.Hit.Z)
+            local mouse = game.Players.LocalPlayer:GetMouse()
+            clickTPConnection = mouse.Button1Down:Connect(function()
+                local char = game.Players.LocalPlayer.Character
+                if char and char:FindFirstChild("HumanoidRootPart") then
+                    char.HumanoidRootPart.CFrame = CFrame.new(mouse.Hit.X, mouse.Hit.Y + 4, mouse.Hit.Z)
                 end
             end)
         else
@@ -676,7 +693,7 @@ PlayerGroup:AddToggle("ClickTPToggle", {
 -- ==================== GROUP 3: ESP (TRÁI) ====================
 local ESPGroup = MiscTab:AddLeftGroupbox("ESP")
 
--- ESP Player
+-- ESP Player (sửa theo workspace.Players)
 local espPlayerConnection
 ESPGroup:AddToggle("ESPPlayerToggle", {
     Text = "ESP Player",
@@ -684,33 +701,39 @@ ESPGroup:AddToggle("ESPPlayerToggle", {
     Callback = function(state)
         if state then
             espPlayerConnection = game:GetService("RunService").RenderStepped:Connect(function()
-                for _, plr in pairs(game.Players:GetPlayers()) do
-                    if plr ~= game.Players.LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-                        local root = plr.Character.HumanoidRootPart
-                        if not root:FindFirstChild("ESPHighlight") then
-                            local highlight = Instance.new("Highlight")
-                            highlight.Name = "ESPHighlight"
-                            highlight.FillColor = Color3.fromRGB(255, 0, 0)
-                            highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-                            highlight.FillTransparency = 0.5
-                            highlight.Parent = root
+                local playersFolder = workspace:FindFirstChild("Players")
+                if playersFolder then
+                    for _, playerModel in pairs(playersFolder:GetChildren()) do
+                        if playerModel:FindFirstChild("HumanoidRootPart") then
+                            local root = playerModel.HumanoidRootPart
+                            if not root:FindFirstChild("ESPHighlight") then
+                                local highlight = Instance.new("Highlight")
+                                highlight.Name = "ESPHighlight"
+                                highlight.FillColor = Color3.fromRGB(255, 0, 0)
+                                highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+                                highlight.FillTransparency = 0.5
+                                highlight.Parent = root
+                            end
                         end
                     end
                 end
             end)
         else
             if espPlayerConnection then espPlayerConnection:Disconnect() end
-            for _, plr in pairs(game.Players:GetPlayers()) do
-                if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-                    local hl = plr.Character.HumanoidRootPart:FindFirstChild("ESPHighlight")
-                    if hl then hl:Destroy() end
+            local playersFolder = workspace:FindFirstChild("Players")
+            if playersFolder then
+                for _, playerModel in pairs(playersFolder:GetChildren()) do
+                    if playerModel:FindFirstChild("HumanoidRootPart") then
+                        local hl = playerModel.HumanoidRootPart:FindFirstChild("ESPHighlight")
+                        if hl then hl:Destroy() end
+                    end
                 end
             end
         end
     end,
 })
 
--- ESP Slots (Plot 1-5, Slot 1-30)
+-- ESP Slots
 local espSlotsConnection
 ESPGroup:AddToggle("ESPSlotsToggle", {
     Text = "ESP Slots",
