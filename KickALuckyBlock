@@ -538,7 +538,7 @@ local FpsTab = Tabs["FPS Boost"]
 local FPSGroup = FpsTab:AddLeftGroupbox("FPS")
 
 FPSGroup:AddButton("Boost FPS", function()
-    -- Xóa Product gây lag
+    -- Xóa 3 Product
     for i = 1, 3 do
         local product = workspace:FindFirstChild("Product " .. i)
         if product then
@@ -546,31 +546,16 @@ FPSGroup:AddButton("Boost FPS", function()
         end
     end
 
-    -- 1. Giảm đồ họa
+    -- BASIC FPS BOOST (chạy nguyên đoạn bạn đưa)
     settings().Rendering.QualityLevel = 1
-
-    -- 2. Tắt shadow
     game:GetService("Lighting").GlobalShadows = false
 
-    -- 3. Đơn giản hóa vật liệu toàn map
     for _, v in pairs(workspace:GetDescendants()) do
         if v:IsA("BasePart") then
             v.Material = Enum.Material.SmoothPlastic
             v.Reflectance = 0
         end
     end
-
-    -- Tối ưu thêm (giảm lag mạnh hơn)
-    pcall(function()
-        workspace.StreamingEnabled = true
-        workspace.Terrain.WaterWaveSize = 0
-        workspace.Terrain.WaterWaveSpeed = 0
-        workspace.Terrain.WaterReflectance = 0
-        workspace.Terrain.WaterTransparency = 1
-        game.Lighting.FogEnd = 99999
-        if workspace:FindFirstChild("Effects") then workspace.Effects:Destroy() end
-        if workspace:FindFirstChild("Particles") then workspace.Particles:Destroy() end
-    end)
 end)
 
 -- ==================== GROUP 2: HIDE (PHẢI) ====================
