@@ -538,29 +538,46 @@ local FpsTab = Tabs["FPS Boost"]
 local FPSGroup = FpsTab:AddLeftGroupbox("FPS")
 
 FPSGroup:AddButton("Boost FPS", function()
+    -- Xóa Product gây lag
     for i = 1, 3 do
         local product = workspace:FindFirstChild("Product " .. i)
         if product then
-            product.Parent = nil
+            product:Destroy()
         end
     end
+
+    -- Tối ưu map giảm lag mạnh
+    pcall(function()
+        workspace.StreamingEnabled = true
+        workspace.Terrain.WaterWaveSize = 0
+        workspace.Terrain.WaterWaveSpeed = 0
+        workspace.Terrain.WaterReflectance = 0
+        workspace.Terrain.WaterTransparency = 1
+        game.Lighting.GlobalShadows = false
+        game.Lighting.FogEnd = 99999
+        settings().Rendering.QualityLevel = 1
+        if workspace:FindFirstChild("Effects") then workspace.Effects:Destroy() end
+        if workspace:FindFirstChild("Particles") then workspace.Particles:Destroy() end
+    end)
 end)
 
 -- ==================== GROUP 2: HIDE (PHẢI) ====================
 local HideGroup = FpsTab:AddRightGroupbox("Hide")
 
--- Button Hide Brainrot
+-- Hide Brainrot (Plot 1 đến 5)
 HideGroup:AddButton("Hide Brainrot", function()
-    local plot = workspace.Plots:FindFirstChild("Plot2")
-    if plot then
-        local slots = plot:FindFirstChild("Slots")
-        if slots then
-            for i = 1, 30 do
-                local slot = slots:FindFirstChild("Slot" .. i)
-                if slot then
-                    local placed = slot:FindFirstChild("PlacedPart")
-                    if placed then
-                        placed:Destroy()
+    for plotNum = 1, 5 do
+        local plot = workspace.Plots:FindFirstChild("Plot" .. plotNum)
+        if plot then
+            local slots = plot:FindFirstChild("Slots")
+            if slots then
+                for i = 1, 30 do
+                    local slot = slots:FindFirstChild("Slot" .. i)
+                    if slot then
+                        local placedPart = slot:FindFirstChild("PlacedPart")
+                        if placedPart then
+                            placedPart:Destroy()
+                        end
                     end
                 end
             end
@@ -568,33 +585,13 @@ HideGroup:AddButton("Hide Brainrot", function()
     end
 end)
 
--- Toggle Hide Decor
-local isDecorHidden = false
-local savedDecorParent = nil
-
-HideGroup:AddToggle("HideDecorToggle", {
-    Text = "Hide Decor",
-    Default = false,
-    Callback = function(state)
-        if state then
-            -- Bật: Cut Decor
-            local decor = workspace:FindFirstChild("Decor")
-            if decor then
-                savedDecorParent = decor.Parent
-                decor.Parent = nil
-                isDecorHidden = true
-            end
-        else
-            -- Tắt: Restore Decor
-            if savedDecorParent then
-                local decor = workspace:FindFirstChild("Decor") or Instance.new("Folder")
-                decor.Name = "Decor"
-                decor.Parent = savedDecorParent
-                isDecorHidden = false
-            end
-        end
-    end,
-})
+-- Destroy Decor (xóa luôn)
+HideGroup:AddButton("Destroy Decor", function()
+    local decor = workspace:FindFirstChild("Decor")
+    if decor then
+        decor:Destroy()
+    end
+end)
 
 -- ==================== UI SETTINGS ====================
 local MenuGroup = Tabs["UI Settings"]:AddLeftGroupbox("Menu")
