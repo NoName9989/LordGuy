@@ -19,7 +19,7 @@ local Tabs = {
     Automatic = Window:AddTab("Automatic", "bolt"),
     Shop = Window:AddTab("Shop", "shopping-cart"),
     ["FPS Boost"] = Window:AddTab("FPS Boost", "zap"),
-    Misc = Window:AddTab("Misc", "more-horizontal"),
+    Misc = Window:AddTab("Misc", "component"),
     ["UI Settings"] = Window:AddTab("UI Settings", "settings"),
 }
 
