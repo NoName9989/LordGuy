@@ -628,7 +628,6 @@ end)
 -- ==================== GROUP 2: PLAYER (PHẢI) ====================
 local PlayerGroup = MiscTab:AddRightGroupbox("Player")
 
--- Infinite Jump
 local infiniteJumpConnection
 PlayerGroup:AddToggle("InfiniteJumpToggle", {
     Text = "Infinite Jump",
@@ -647,7 +646,6 @@ PlayerGroup:AddToggle("InfiniteJumpToggle", {
     end,
 })
 
--- No Clip
 local noclipConnection
 PlayerGroup:AddToggle("NoClipToggle", {
     Text = "No Clip",
@@ -670,7 +668,6 @@ PlayerGroup:AddToggle("NoClipToggle", {
     end,
 })
 
--- Click to Teleport (đã fix)
 local clickTPConnection
 PlayerGroup:AddToggle("ClickTPToggle", {
     Text = "Click to Teleport",
@@ -693,95 +690,214 @@ PlayerGroup:AddToggle("ClickTPToggle", {
 -- ==================== GROUP 3: ESP (TRÁI) ====================
 local ESPGroup = MiscTab:AddLeftGroupbox("ESP")
 
--- ESP Player (sửa theo workspace.Players)
+-- ESP Player (phiên bản đẹp)
 local espPlayerConnection
 ESPGroup:AddToggle("ESPPlayerToggle", {
     Text = "ESP Player",
     Default = false,
     Callback = function(state)
         if state then
-            espPlayerConnection = game:GetService("RunService").RenderStepped:Connect(function()
-                local playersFolder = workspace:FindFirstChild("Players")
-                if playersFolder then
-                    for _, playerModel in pairs(playersFolder:GetChildren()) do
-                        if playerModel:FindFirstChild("HumanoidRootPart") then
-                            local root = playerModel.HumanoidRootPart
-                            if not root:FindFirstChild("ESPHighlight") then
-                                local highlight = Instance.new("Highlight")
-                                highlight.Name = "ESPHighlight"
-                                highlight.FillColor = Color3.fromRGB(255, 0, 0)
-                                highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-                                highlight.FillTransparency = 0.5
-                                highlight.Parent = root
-                            end
-                        end
+            local Players = game:GetService("Players")
+            local RunService = game:GetService("RunService")
+            local LP = Players.LocalPlayer
+            local targetFolder = workspace:WaitForChild("Players")
+
+            local function clearESP(obj)
+                for _, v in pairs(obj:GetDescendants()) do
+                    if v.Name == "ESP_UI" then v:Destroy() end
+                end
+            end
+
+            local function getColor(dist)
+                local maxDist = 300
+                local t = math.clamp(dist / maxDist, 0, 1)
+                local r = 255 * t
+                local g = 255 * (1 - t)
+                return Color3.fromRGB(r, g, 50)
+            end
+
+            local function createESP(char)
+                if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+                if char:FindFirstChild("ESP_UI") then return end
+
+                local bill = Instance.new("BillboardGui")
+                bill.Name = "ESP_UI"
+                bill.Size = UDim2.new(0, 180, 0, 60)
+                bill.AlwaysOnTop = true
+                bill.StudsOffset = Vector3.new(0, 3, 0)
+                bill.Adornee = char:FindFirstChild("Head") or char:FindFirstChild("HumanoidRootPart")
+                bill.Parent = char
+
+                local bg = Instance.new("Frame", bill)
+                bg.Size = UDim2.new(1,0,1,0)
+                bg.BackgroundColor3 = Color3.fromRGB(10,10,10)
+                bg.BackgroundTransparency = 0.25
+                bg.BorderSizePixel = 0
+                Instance.new("UICorner", bg).CornerRadius = UDim.new(0,12)
+
+                local grad = Instance.new("UIGradient", bg)
+                grad.Color = ColorSequence.new{
+                    ColorSequenceKeypoint.new(0, Color3.fromRGB(0,170,255)),
+                    ColorSequenceKeypoint.new(1, Color3.fromRGB(0,255,200))
+                }
+
+                local txt = Instance.new("TextLabel", bg)
+                txt.Size = UDim2.new(1,0,1,0)
+                txt.BackgroundTransparency = 1
+                txt.TextScaled = true
+                txt.Font = Enum.Font.Arcade
+                txt.TextStrokeTransparency = 0.1
+                txt.TextColor3 = Color3.fromRGB(255,255,255)
+
+                local stroke = Instance.new("UIStroke", bg)
+                stroke.Thickness = 1.5
+                stroke.Transparency = 0.3
+
+                RunService.RenderStepped:Connect(function()
+                    if not char or not char.Parent then return end
+                    if not char:FindFirstChild("HumanoidRootPart") then return end
+                    local myChar = LP.Character
+                    if not myChar or not myChar:FindFirstChild("HumanoidRootPart") then return end
+
+                    local dist = (myChar.HumanoidRootPart.Position - char.HumanoidRootPart.Position).Magnitude
+                    local color = getColor(dist)
+                    txt.Text = char.Name .. " [" .. math.floor(dist) .. "m]"
+                    txt.TextColor3 = color
+                    stroke.Color = color
+                end)
+            end
+
+            local function setupPlayer(plr)
+                clearESP(plr)
+                if plr:IsA("Model") then createESP(plr) end
+                plr.ChildAdded:Connect(function(child)
+                    if child:IsA("Model") then
+                        task.wait(0.3)
+                        createESP(child)
                     end
+                end)
+            end
+
+            for _, plr in pairs(targetFolder:GetChildren()) do
+                if plr:IsA("Model") then setupPlayer(plr) end
+            end
+
+            targetFolder.ChildAdded:Connect(function(plr)
+                if plr:IsA("Model") then
+                    task.wait(0.5)
+                    setupPlayer(plr)
                 end
             end)
         else
-            if espPlayerConnection then espPlayerConnection:Disconnect() end
             local playersFolder = workspace:FindFirstChild("Players")
             if playersFolder then
-                for _, playerModel in pairs(playersFolder:GetChildren()) do
-                    if playerModel:FindFirstChild("HumanoidRootPart") then
-                        local hl = playerModel.HumanoidRootPart:FindFirstChild("ESPHighlight")
-                        if hl then hl:Destroy() end
-                    end
+                for _, v in pairs(playersFolder:GetDescendants()) do
+                    if v.Name == "ESP_UI" then v:Destroy() end
                 end
             end
         end
     end,
 })
 
--- ESP Slots
+-- ESP Slots (phiên bản đẹp)
 local espSlotsConnection
 ESPGroup:AddToggle("ESPSlotsToggle", {
     Text = "ESP Slots",
     Default = false,
     Callback = function(state)
         if state then
-            espSlotsConnection = game:GetService("RunService").RenderStepped:Connect(function()
-                for plotNum = 1, 5 do
-                    local plot = workspace.Plots:FindFirstChild("Plot" .. plotNum)
-                    if plot then
-                        local slots = plot:FindFirstChild("Slots")
-                        if slots then
-                            for i = 1, 30 do
-                                local slot = slots:FindFirstChild("Slot" .. i)
-                                if slot then
-                                    local placed = slot:FindFirstChild("PlacedPart")
-                                    if placed and not placed:FindFirstChild("ESPHighlight") then
-                                        local highlight = Instance.new("Highlight")
-                                        highlight.Name = "ESPHighlight"
-                                        highlight.FillColor = Color3.fromRGB(0, 255, 0)
-                                        highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-                                        highlight.FillTransparency = 0.5
-                                        highlight.Parent = placed
-                                    end
-                                end
-                            end
+            local Players = game:GetService("Players")
+            local RunService = game:GetService("RunService")
+            local LP = Players.LocalPlayer
+            local plotsFolder = workspace:WaitForChild("Plots")
+            local MAX_DISTANCE = 20
+
+            local function clearESP()
+                for _, v in pairs(plotsFolder:GetDescendants()) do
+                    if v.Name == "ESP_SLOT" then v:Destroy() end
+                end
+            end
+
+            local function createESP(slot, plotName, slotName)
+                if not slot:IsA("BasePart") then return end
+                if slot:FindFirstChild("ESP_SLOT") then return end
+
+                local bill = Instance.new("BillboardGui")
+                bill.Name = "ESP_SLOT"
+                bill.Size = UDim2.new(0, 140, 0, 50)
+                bill.AlwaysOnTop = true
+                bill.StudsOffset = Vector3.new(0, 2.5, 0)
+                bill.Adornee = slot
+                bill.Parent = slot
+
+                local bg = Instance.new("Frame", bill)
+                bg.Size = UDim2.new(1,0,1,0)
+                bg.BackgroundColor3 = Color3.fromRGB(15,15,15)
+                bg.BackgroundTransparency = 0.25
+                bg.BorderSizePixel = 0
+                Instance.new("UICorner", bg).CornerRadius = UDim.new(0,10)
+
+                local grad = Instance.new("UIGradient", bg)
+                grad.Color = ColorSequence.new{
+                    ColorSequenceKeypoint.new(0, Color3.fromRGB(255,170,0)),
+                    ColorSequenceKeypoint.new(1, Color3.fromRGB(255,255,0))
+                }
+
+                local txt = Instance.new("TextLabel", bg)
+                txt.Size = UDim2.new(1,0,1,0)
+                txt.BackgroundTransparency = 1
+                txt.TextScaled = true
+                txt.Font = Enum.Font.Arcade
+                txt.TextStrokeTransparency = 0.1
+                txt.TextColor3 = Color3.fromRGB(255,255,255)
+
+                local stroke = Instance.new("UIStroke", bg)
+                stroke.Thickness = 1.5
+                stroke.Transparency = 0.3
+
+                RunService.RenderStepped:Connect(function()
+                    if not slot or not slot.Parent then return end
+                    local char = LP.Character
+                    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+
+                    local dist = (char.HumanoidRootPart.Position - slot.Position).Magnitude
+                    if dist <= MAX_DISTANCE then
+                        bill.Enabled = true
+                        txt.Text = plotName .. " | " .. slotName .. " [" .. math.floor(dist) .. "m]"
+                    else
+                        bill.Enabled = false
+                    end
+                end)
+            end
+
+            local function scanPlots()
+                for _, plot in pairs(plotsFolder:GetChildren()) do
+                    if plot:IsA("Model") and plot:FindFirstChild("Slots") then
+                        for _, slot in pairs(plot.Slots:GetChildren()) do
+                            createESP(slot, plot.Name, slot.Name)
                         end
+                    end
+                end
+            end
+
+            clearESP()
+            scanPlots()
+
+            plotsFolder.DescendantAdded:Connect(function(obj)
+                if obj:IsA("BasePart") and obj.Parent and obj.Parent.Name:match("Slot") then
+                    local slot = obj
+                    local plot = slot.Parent.Parent
+                    if plot and plot.Parent == plotsFolder then
+                        task.wait(0.2)
+                        createESP(slot, plot.Name, slot.Name)
                     end
                 end
             end)
         else
-            if espSlotsConnection then espSlotsConnection:Disconnect() end
-            for plotNum = 1, 5 do
-                local plot = workspace.Plots:FindFirstChild("Plot" .. plotNum)
-                if plot then
-                    local slots = plot:FindFirstChild("Slots")
-                    if slots then
-                        for i = 1, 30 do
-                            local slot = slots:FindFirstChild("Slot" .. i)
-                            if slot then
-                                local placed = slot:FindFirstChild("PlacedPart")
-                                if placed then
-                                    local hl = placed:FindFirstChild("ESPHighlight")
-                                    if hl then hl:Destroy() end
-                                end
-                            end
-                        end
-                    end
+            local plotsFolder = workspace:FindFirstChild("Plots")
+            if plotsFolder then
+                for _, v in pairs(plotsFolder:GetDescendants()) do
+                    if v.Name == "ESP_SLOT" then v:Destroy() end
                 end
             end
         end
