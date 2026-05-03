@@ -993,4 +993,9 @@ SaveManager:SetLibrary(Library)
 ThemeManager:SetFolder("LordCat")
 SaveManager:SetFolder("LordCat")
 ThemeManager:ApplyToTab(Tabs["UI Settings"])
-SaveManager:BuildConfigSection(Tabs["UI Settings"])
+
+-- ==================== SAVE MANAGER ====================
+SaveManager:BuildConfigSection(Tabs["UI Settings"])   -- ← Nút Save / Load / Delete thủ công
+
+SaveManager:AutoSave()                                 -- ← Tự động lưu mọi thay đổi
+SaveManager:LoadAutoloadConfig()                       -- ← Tự động load config cũ khi mở GUI
