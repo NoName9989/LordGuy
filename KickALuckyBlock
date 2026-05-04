@@ -501,7 +501,7 @@ local CollectDropdown = CollectGroup:AddDropdown("CollectDropdown", {
     Values = CollectValues,
     Default = {},
     Multi = true,
-    Callback = function() end   -- không cần lưu biến riêng
+    Callback = function() end   
 })
 
 -- Toggle Auto Collect Selected
@@ -602,7 +602,7 @@ OfflineClaimGroup:AddToggle("AutoClaimOfflineToggle", {
 -- ==================== AUTO CLAIM OFFLINE LOGIC ====================
 task.spawn(function()
     while true do
-        wait(2.0)   -- delay 2 giây (an toàn cho offline claim)
+        wait(0.7)   
         
         if isAutoClaimOffline then
             game:GetService("ReplicatedStorage"):WaitForChild("Shared")
@@ -618,8 +618,9 @@ local ShopTab = Tabs.Shop
 local WeightsShopGroup = ShopTab:AddLeftGroupbox("Weights Shop")
 
 local SelectedWeightShopItem = "Wooden Stick"
+local isAutoBuyWeight = false
 
--- Dropdown chọn item (giống tab Farm)
+-- Dropdown chọn item
 WeightsShopGroup:AddDropdown("WeightShopDropdown", {
     Text = "Select Weight Item",
     Values = {
@@ -634,21 +635,53 @@ WeightsShopGroup:AddDropdown("WeightShopDropdown", {
     end,
 })
 
--- Button Buy (mua + equip luôn)
-WeightsShopGroup:AddButton("Buy", function()
-    -- 1. Mua item từ shop
+-- Toggle Auto Buy
+WeightsShopGroup:AddToggle("AutoBuyWeightToggle", {
+    Text = "Auto Buy & Equip",
+    Default = false,
+    Callback = function(state)
+        isAutoBuyWeight = state
+    end,
+})
+
+-- Button Buy thủ công (giữ nguyên)
+WeightsShopGroup:AddButton("Buy Once", function()
     local buyArgs = {"WeightShop", SelectedWeightShopItem}
     game:GetService("ReplicatedStorage"):WaitForChild("Shared")
         :WaitForChild("Packages"):WaitForChild("Network")
         :WaitForChild("rev_Shop_Buy"):FireServer(unpack(buyArgs))
 
-    wait(0.3) -- delay nhỏ để server xử lý mua
+    wait(0.4)
 
-    -- 2. Equip item
     local equipArgs = {SelectedWeightShopItem}
     game:GetService("ReplicatedStorage"):WaitForChild("Shared")
         :WaitForChild("Packages"):WaitForChild("Network")
         :WaitForChild("rev_WeightEquip"):FireServer(unpack(equipArgs))
+end)
+
+-- ==================== AUTO BUY & EQUIP LOGIC ====================
+task.spawn(function()
+    while true do
+        wait(0.65)
+
+        if not isAutoBuyWeight then continue end
+
+        local player = game.Players.LocalPlayer
+
+        -- Buy
+        local buyArgs = {"WeightShop", SelectedWeightShopItem}
+        game:GetService("ReplicatedStorage"):WaitForChild("Shared")
+            :WaitForChild("Packages"):WaitForChild("Network")
+            :WaitForChild("rev_Shop_Buy"):FireServer(unpack(buyArgs))
+
+        wait(0.4)
+
+        -- Equip
+        local equipArgs = {SelectedWeightShopItem}
+        game:GetService("ReplicatedStorage"):WaitForChild("Shared")
+            :WaitForChild("Packages"):WaitForChild("Network")
+            :WaitForChild("rev_WeightEquip"):FireServer(unpack(equipArgs))
+    end
 end)
 
 -- ==================== TAB FPS BOOST ====================
