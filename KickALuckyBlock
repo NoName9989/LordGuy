@@ -280,15 +280,16 @@ function StartKickFarm()
     kickTask = nil
 end
 
--- ==================== WEIGHT FARM ====================
-local WeightFarmGroup = Tabs.Farm:AddRightGroupbox("Weight Farm")
+-- ==================== KICK POWER FARM ====================
+local KickPowerFarmGroup = Tabs.Farm:AddRightGroupbox("Kick Power Farm")
 
 local isWeightFarming = false
 local isAutoX2 = false
 local x2Time = 30
+local BonusTrainMode = "Ngay lập tức"   -- "Ngay lập tức" hoặc "Tích Luỹ"
 
-WeightFarmGroup:AddToggle("AutoWeightFarmToggle", {
-    Text = "Enable Weight Farm",
+KickPowerFarmGroup:AddToggle("AutoWeightFarmToggle", {
+    Text = "Enable Farm",
     Default = false,
     Callback = function(state)
         isWeightFarming = state
@@ -298,17 +299,28 @@ WeightFarmGroup:AddToggle("AutoWeightFarmToggle", {
     end,
 })
 
-WeightFarmGroup:AddToggle("AutoX2WeightToggle", {
-    Text = "Auto x2 Weight",
+KickPowerFarmGroup:AddToggle("AutoX2WeightToggle", {
+    Text = "Auto Bonus Train",
     Default = false,
     Callback = function(state)
         isAutoX2 = state
     end,
 })
 
-WeightFarmGroup:AddLabel("Note: Auto x2 Weight only works when Enable Weight Farm is enabled", true)
+-- Dropdown chọn kiểu Bonus Train
+KickPowerFarmGroup:AddDropdown("BonusTrainModeDropdown", {
+    Text = "Bonus Train Mode",
+    Values = {"Ngay lập tức", "Tích Luỹ"},
+    Default = 1,   -- Mặc định là "Ngay lập tức"
+    Multi = false,
+    Callback = function(Value)
+        BonusTrainMode = Value
+    end,
+})
 
--- ==================== WEIGHT FARM LOGIC (AUTO TẤT CẢ ITEMS) ====================
+KickPowerFarmGroup:AddLabel("Note: Auto Bonus Train only works when Enable Farm is enabled", true)
+
+-- ==================== KICK POWER FARM LOGIC ====================
 function UnequipWeightOnce()
     local player = game.Players.LocalPlayer
     local character = player.Character
@@ -345,15 +357,29 @@ task.spawn(function()
             continue
         end
 
-        -- Auto X2
-        if isAutoX2 and (tick() - lastX2Time >= x2Time) then
-            game:GetService("ReplicatedStorage"):WaitForChild("Shared")
-                :WaitForChild("Packages"):WaitForChild("Network")
-                :WaitForChild("rev_TaviMishkal"):FireServer()
-            lastX2Time = tick()
+        -- ==================== AUTO BONUS TRAIN ====================
+        if isAutoX2 then
+            if BonusTrainMode == "Ngay lập tức" then
+                -- Click ngay khi nút xuất hiện
+                local gui = player.PlayerGui:FindFirstChild("KickUpgrades")
+                if gui then
+                    local bonusButton = gui:GetChildren()[4]
+                    if bonusButton and bonusButton.Visible and bonusButton:FindFirstChild("TextButton") then
+                        firesignal(bonusButton.TextButton.Activated)
+                    end
+                end
+            else
+                -- Tích Luỹ (cách cũ)
+                if tick() - lastX2Time >= x2Time then
+                    game:GetService("ReplicatedStorage"):WaitForChild("Shared")
+                        :WaitForChild("Packages"):WaitForChild("Network")
+                        :WaitForChild("rev_TaviMishkal"):FireServer()
+                    lastX2Time = tick()
+                end
+            end
         end
 
-        -- Auto Equip TẤT CẢ weight items
+        -- ==================== AUTO EQUIP TẤT CẢ WEIGHT ITEMS ====================
         for _, itemName in ipairs(weightList) do
             local item = backpack:FindFirstChild(itemName)
             if item then
