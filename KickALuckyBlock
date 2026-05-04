@@ -108,7 +108,6 @@ end)
 
 KickFarmSettingGroup:AddDivider()
 
--- ==================== FIND MUTATION ====================
 KickFarmSettingGroup:AddLabel("Find Mutation (Multi)")
 
 local mutationList = {"Gold", "Diamond", "Plasma", "Molten", "Radioactive", "Shadow", "Electrified", "Rainbow"}
@@ -273,38 +272,27 @@ function StartKickFarm()
 
         wait(4)
 
-        -- ==================== FIND MUTATION (DEBUG MẠNH) ====================
-        local hasDesiredMutation = false
+        -- ==================== FIND MUTATION LOGIC ====================
+        local shouldFarmNormal = true
 
         if EnableFindMutation and #SelectedMutations > 0 then
+            local hasDesiredMutation = false
             local debris = workspace:FindFirstChild("Debris")
             if debris then
-                print("🔍 Đang quét Debris... Có", #debris:GetChildren(), "object")
-
                 for _, model in ipairs(debris:GetChildren()) do
                     if model:IsA("Model") then
-                        print("   Model:", model.Name)
-
                         for _, mutName in ipairs(SelectedMutations) do
-                            -- Tìm trực tiếp child
-                            if model:FindFirstChild(mutName) then
+                            if model:FindFirstChild(mutName) or model:FindFirstChild(mutName, true) then
                                 hasDesiredMutation = true
                                 print("✅ TÌM THẤY MUTATION:", mutName, "trong", model.Name)
-                                break
-                            end
-                            -- Tìm trong descendants (an toàn hơn)
-                            if model:FindFirstChild(mutName, true) then
-                                hasDesiredMutation = true
-                                print("✅ TÌM THẤY MUTATION (deep):", mutName, "trong", model.Name)
                                 break
                             end
                         end
                         if hasDesiredMutation then break end
                     end
                 end
-            else
-                print("❌ Không tìm thấy Debris")
             end
+            shouldFarmNormal = hasDesiredMutation
         end
 
         local target = Vector3.new(699.77, 3.00, 231.99)
@@ -312,7 +300,8 @@ function StartKickFarm()
         if FarmMode == "Normal Farm" then
             if DelayAfterTP > 0 then wait(DelayAfterTP) end
 
-            if hasDesiredMutation then
+            if shouldFarmNormal then
+                -- Farm bình thường
                 local baseSpeed = humanoid.WalkSpeed
                 local finalSpeed = baseSpeed + TweenExtraSpeed
                 if finalSpeed < 20 then finalSpeed = 120 end
@@ -325,9 +314,11 @@ function StartKickFarm()
                 tween:Play()
                 tween.Completed:Wait()
             else
+                -- Không có mutation → TP thoát
                 root.CFrame = CFrame.new(713.38, 3.00, 233.94)
             end
         else
+            -- Tp Farm
             root.CFrame = CFrame.new(674.96, -7.00, 232.41)
             if DelayAfterTP > 0 then wait(DelayAfterTP) end
             root.CFrame = CFrame.new(target)
