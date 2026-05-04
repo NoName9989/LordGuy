@@ -29,7 +29,6 @@ local KickFarmSettingGroup = Tabs.Farm:AddLeftGroupbox("Kick Farm Setting")
 local KickRatio = 1
 local FarmDelay = 1
 local MoveDelay = 5
-local DelayAfterTP = 0
 local TweenExtraSpeed = 0
 
 KickFarmSettingGroup:AddLabel("Kick Ratio (0.1 - 1.0)")
@@ -100,43 +99,6 @@ local DelayInput = KickFarmSettingGroup:AddInput("DelayInput", {
 Options.DelaySlider:OnChanged(function()
     local val = Options.DelaySlider.Value
     DelayInput:SetValue(val == 1 and "1" or string.format("%.1f", val))
-end)
-
-KickFarmSettingGroup:AddDivider()
-
-KickFarmSettingGroup:AddLabel("Delay After TP (before moving)")
-
-local DelayAfterTPSlider = KickFarmSettingGroup:AddSlider("DelayAfterTPSlider", {
-    Text = "Delay After TP",
-    Default = 0,
-    Min = 0,
-    Max = 120,
-    Rounding = 0,
-    Increment = 5,
-    Callback = function(v) DelayAfterTP = v end,
-})
-
-local DelayAfterTPInput = KickFarmSettingGroup:AddInput("DelayAfterTPInput", {
-    Default = "0",
-    Numeric = true,
-    Finished = true,
-    Placeholder = "0 - 120",
-    Callback = function(text)
-        local num = tonumber(text)
-        if num and num >= 0 and num <= 120 then
-            DelayAfterTP = num
-            DelayAfterTPSlider:SetValue(num)
-        else
-            DelayAfterTP = 0
-            DelayAfterTPSlider:SetValue(0)
-            DelayAfterTPInput:SetValue("0")
-        end
-    end,
-})
-
-Options.DelayAfterTPSlider:OnChanged(function()
-    local val = Options.DelayAfterTPSlider.Value
-    DelayAfterTPInput:SetValue(tostring(val))
 end)
 
 KickFarmSettingGroup:AddDivider()
@@ -228,6 +190,128 @@ MutationFarmGroup:AddToggle("EnableFindMutationFarmToggle", {
         end
     end,
 })
+
+-- ==================== KICK FARM LOGIC ====================
+function StartKickFarm()
+    local TweenService = game:GetService("TweenService")
+    while isKickFarming do
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local root = character:WaitForChild("HumanoidRootPart")
+        local humanoid = character:WaitForChild("Humanoid")
+
+        root.CFrame = CFrame.new(690.45, 2.99, 231.49)
+        wait(1)
+
+        game:GetService("ReplicatedStorage"):WaitForChild("Shared")
+            :WaitForChild("Packages"):WaitForChild("Network")
+            :WaitForChild("rev_KickEvent"):FireServer(KickRatio)
+        wait(1)
+
+        local waveFolder = workspace:WaitForChild("Waves")
+        local waveDetected = false
+        local conn = waveFolder.ChildAdded:Connect(function(child)
+            if child:IsA("Model") or child:IsA("Folder") then waveDetected = true end
+        end)
+
+        local start = tick()
+        repeat
+            wait(0.5)
+            if tick() - start > 60 then break end
+        until waveDetected or not isKickFarming
+
+        conn:Disconnect()
+        if not isKickFarming then break end
+        wait(4)
+
+        local target = Vector3.new(699.77, 3.00, 231.99)
+
+        -- Normal Farm
+        local baseSpeed = humanoid.WalkSpeed
+        local finalSpeed = baseSpeed + TweenExtraSpeed
+        if finalSpeed < 20 then finalSpeed = 120 end
+        local distance = (target - root.Position).Magnitude
+        local tweenTime = distance / finalSpeed
+
+        local tween = TweenService:Create(root, TweenInfo.new(tweenTime, Enum.EasingStyle.Linear), {CFrame = CFrame.new(target)})
+        tween:Play()
+        tween.Completed:Wait()
+
+        if isKickFarming then wait(FarmDelay) end
+    end
+    kickTask = nil
+end
+
+-- ==================== FIND MUTATION FARM LOGIC ====================
+function StartFindMutationFarm()
+    local TweenService = game:GetService("TweenService")
+    while isFindMutationFarming do
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local root = character:WaitForChild("HumanoidRootPart")
+        local humanoid = character:WaitForChild("Humanoid")
+
+        root.CFrame = CFrame.new(690.45, 2.99, 231.49)
+        wait(1)
+
+        game:GetService("ReplicatedStorage"):WaitForChild("Shared")
+            :WaitForChild("Packages"):WaitForChild("Network")
+            :WaitForChild("rev_KickEvent"):FireServer(KickRatio)
+        wait(1)
+
+        local waveFolder = workspace:WaitForChild("Waves")
+        local waveDetected = false
+        local conn = waveFolder.ChildAdded:Connect(function(child)
+            if child:IsA("Model") or child:IsA("Folder") then waveDetected = true end
+        end)
+
+        local start = tick()
+        repeat
+            wait(0.5)
+            if tick() - start > 60 then break end
+        until waveDetected or not isFindMutationFarming
+
+        conn:Disconnect()
+        if not isFindMutationFarming then break end
+        wait(4)
+
+        -- Find Mutation
+        local hasDesiredMutation = false
+        local debris = workspace:FindFirstChild("Debris")
+        if debris then
+            for _, model in ipairs(debris:GetChildren()) do
+                if model:IsA("Model") then
+                    for _, mutName in ipairs(SelectedMutations) do
+                        if model:FindFirstChild(mutName) or model:FindFirstChild(mutName, true) then
+                            hasDesiredMutation = true
+                            break
+                        end
+                    end
+                    if hasDesiredMutation then break end
+                end
+            end
+        end
+
+        local target = Vector3.new(699.77, 3.00, 231.99)
+
+        if hasDesiredMutation then
+            local baseSpeed = humanoid.WalkSpeed
+            local finalSpeed = baseSpeed + TweenExtraSpeed
+            if finalSpeed < 20 then finalSpeed = 120 end
+            local distance = (target - root.Position).Magnitude
+            local tweenTime = distance / finalSpeed
+
+            local tween = TweenService:Create(root, TweenInfo.new(tweenTime, Enum.EasingStyle.Linear), {CFrame = CFrame.new(target)})
+            tween:Play()
+            tween.Completed:Wait()
+        else
+            root.CFrame = CFrame.new(713.38, 3.00, 233.94)
+        end
+
+        if isFindMutationFarming then wait(FarmDelay) end
+    end
+    mutationTask = nil
+end
 
 -- ==================== KICK POWER FARM ====================
 local KickPowerFarmGroup = Tabs.Farm:AddRightGroupbox("Kick Power Farm")
