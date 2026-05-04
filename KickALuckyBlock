@@ -28,7 +28,9 @@ local KickFarmSettingGroup = Tabs.Farm:AddLeftGroupbox("Kick Farm Setting")
 
 local KickRatio = 1
 local FarmDelay = 1
-local MoveDelay = 5   -- Chỉ dùng cho Tp Farm
+local MoveDelay = 5          -- Chỉ dùng cho Tp Farm
+local PreFlyDelay = 0        -- Delay trước khi tween/bay (mới)
+local TweenExtraSpeed = 0    -- Tốc độ cộng thêm vào WalkSpeed (mới)
 
 KickFarmSettingGroup:AddLabel("Kick Ratio (0.1 - 1.0)")
 
@@ -100,10 +102,86 @@ Options.DelaySlider:OnChanged(function()
     DelayInput:SetValue(val == 1 and "1" or string.format("%.1f", val))
 end)
 
+KickFarmSettingGroup:AddDivider()
+
+-- ==================== DELAY TRƯỚC KHI BAY / TWEEN ====================
+KickFarmSettingGroup:AddLabel("Delay Before Fly/Tween (0 - 120 seconds)")
+
+local PreFlySlider = KickFarmSettingGroup:AddSlider("PreFlySlider", {
+    Text = "Delay Before Fly",
+    Default = 0,
+    Min = 0,
+    Max = 120,
+    Rounding = 0,
+    Increment = 5,
+    Callback = function(v) PreFlyDelay = v end,
+})
+
+local PreFlyInput = KickFarmSettingGroup:AddInput("PreFlyInput", {
+    Default = "0",
+    Numeric = true,
+    Finished = true,
+    Placeholder = "0 - 120",
+    Callback = function(text)
+        local num = tonumber(text)
+        if num and num >= 0 and num <= 120 then
+            PreFlyDelay = num
+            PreFlySlider:SetValue(num)
+        else
+            PreFlyDelay = 0
+            PreFlySlider:SetValue(0)
+            PreFlyInput:SetValue("0")
+        end
+    end,
+})
+
+Options.PreFlySlider:OnChanged(function()
+    local val = Options.PreFlySlider.Value
+    PreFlyInput:SetValue(tostring(val))
+end)
+
+KickFarmSettingGroup:AddDivider()
+
+-- ==================== EXTRA TWEEN SPEED ====================
+KickFarmSettingGroup:AddLabel("Extra Tween Speed (0 - 200 studs/s)")
+
+local ExtraSpeedSlider = KickFarmSettingGroup:AddSlider("ExtraSpeedSlider", {
+    Text = "Extra Tween Speed",
+    Default = 0,
+    Min = 0,
+    Max = 200,
+    Rounding = 0,
+    Increment = 5,
+    Callback = function(v) TweenExtraSpeed = v end,
+})
+
+local ExtraSpeedInput = KickFarmSettingGroup:AddInput("ExtraSpeedInput", {
+    Default = "0",
+    Numeric = true,
+    Finished = true,
+    Placeholder = "0 - 200",
+    Callback = function(text)
+        local num = tonumber(text)
+        if num and num >= 0 and num <= 200 then
+            TweenExtraSpeed = num
+            ExtraSpeedSlider:SetValue(num)
+        else
+            TweenExtraSpeed = 0
+            ExtraSpeedSlider:SetValue(0)
+            ExtraSpeedInput:SetValue("0")
+        end
+    end,
+})
+
+Options.ExtraSpeedSlider:OnChanged(function()
+    local val = Options.ExtraSpeedSlider.Value
+    ExtraSpeedInput:SetValue(tostring(val))
+end)
+
 -- ==================== KICK FARM ====================
 local KickFarmGroup = Tabs.Farm:AddLeftGroupbox("Kick Farm")
 
-local FarmMode = "Normal Farm"   -- Base là Normal Farm
+local FarmMode = "Normal Farm"
 
 KickFarmGroup:AddDropdown("FarmModeDropdown", {
     Text = "Farm Mode",
@@ -143,17 +221,14 @@ function StartKickFarm()
         local root = character:WaitForChild("HumanoidRootPart")
         local humanoid = character:WaitForChild("Humanoid")
 
-        -- TP đến vị trí Kick
         root.CFrame = CFrame.new(690.45, 2.99, 231.49)
         wait(1)
 
-        -- Kick
         game:GetService("ReplicatedStorage"):WaitForChild("Shared")
             :WaitForChild("Packages"):WaitForChild("Network")
             :WaitForChild("rev_KickEvent"):FireServer(KickRatio)
         wait(1)
 
-        -- Đợi wave
         local waveFolder = workspace:WaitForChild("Waves")
         local waveDetected = false
         local conn = waveFolder.ChildAdded:Connect(function(child)
@@ -169,18 +244,23 @@ function StartKickFarm()
         conn:Disconnect()
         if not isKickFarming then break end
 
-        wait(4)   -- Đợi 4 giây sau khi wave xuất hiện
+        wait(4)   -- Đợi 4 giây sau wave
+
+        -- ==================== DELAY TRƯỚC KHI BAY ====================
+        if PreFlyDelay > 0 then
+            wait(PreFlyDelay)
+        end
 
         local target = Vector3.new(699.77, 3.00, 231.99)
 
         if FarmMode == "Normal Farm" then
-            -- ==================== NORMAL FARM: Tween theo tốc độ đi bộ thực tế sau wave ====================
+            -- Normal Farm: Tween theo tốc độ gốc + extra
+            local baseSpeed = humanoid.WalkSpeed
+            local finalSpeed = baseSpeed + TweenExtraSpeed
+            if finalSpeed < 20 then finalSpeed = 120 end
+
             local distance = (target - root.Position).Magnitude
-            local walkSpeed = humanoid.WalkSpeed   -- Tốc độ đi bộ thực tế (studs/s)
-
-            if walkSpeed < 10 then walkSpeed = 16 end   -- fallback nếu lag
-
-            local tweenTime = distance / walkSpeed     -- Tính thời gian tween theo studs/s
+            local tweenTime = distance / finalSpeed
 
             local tweenInfo = TweenInfo.new(tweenTime, Enum.EasingStyle.Linear)
             local tween = TweenService:Create(root, tweenInfo, {CFrame = CFrame.new(target)})
@@ -189,7 +269,7 @@ function StartKickFarm()
             tween.Completed:Wait()
 
         else
-            -- ==================== TP FARM (giữ nguyên cũ) ====================
+            -- Tp Farm (giữ nguyên)
             root.CFrame = CFrame.new(674.96, -7.00, 232.41)
             wait(MoveDelay)
             root.CFrame = CFrame.new(target)
