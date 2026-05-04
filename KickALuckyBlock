@@ -141,19 +141,8 @@ end)
 -- ==================== KICK FARM (BÊN PHẢI) ====================
 local KickFarmGroup = Tabs.Farm:AddRightGroupbox("Kick Farm")
 
-local FarmMode = "Normal Farm"
 local isKickFarming = false
 local kickTask = nil
-
-KickFarmGroup:AddDropdown("FarmModeDropdown", {
-    Text = "Farm Mode",
-    Values = {"Normal Farm", "Tp Farm"},
-    Default = 1,
-    Multi = false,
-    Callback = function(Value)
-        FarmMode = Value
-    end,
-})
 
 KickFarmGroup:AddToggle("AutoKickFarmToggle", {
     Text = "Enable Kick Farm",
@@ -169,6 +158,63 @@ KickFarmGroup:AddToggle("AutoKickFarmToggle", {
         end
     end,
 })
+
+-- ==================== KICK FARM LOGIC (NORMAL FARM) ====================
+function StartKickFarm()
+    local TweenService = game:GetService("TweenService")
+
+    while isKickFarming do
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local root = character:WaitForChild("HumanoidRootPart")
+        local humanoid = character:WaitForChild("Humanoid")
+
+        -- 1. TP đến điểm kick
+        root.CFrame = CFrame.new(690.45, 2.99, 231.49)
+        wait(1)
+
+        -- 2. Fire remote kick
+        game:GetService("ReplicatedStorage"):WaitForChild("Shared")
+            :WaitForChild("Packages"):WaitForChild("Network")
+            :WaitForChild("rev_KickEvent"):FireServer(KickRatio)
+        wait(1)
+
+        -- 3. Đợi wave
+        local waveFolder = workspace:WaitForChild("Waves")
+        local waveDetected = false
+        local conn = waveFolder.ChildAdded:Connect(function(child)
+            if child:IsA("Model") or child:IsA("Folder") then waveDetected = true end
+        end)
+
+        local start = tick()
+        repeat
+            wait(0.5)
+            if tick() - start > 60 then break end
+        until waveDetected or not isKickFarming
+
+        conn:Disconnect()
+        if not isKickFarming then break end
+
+        -- 4. Đợi 4 giây sau wave
+        wait(4)
+
+        -- 5. Tween về đích (Normal Farm)
+        local target = Vector3.new(699.77, 3.00, 231.99)
+        local baseSpeed = humanoid.WalkSpeed
+        local finalSpeed = baseSpeed + TweenExtraSpeed
+        if finalSpeed < 20 then finalSpeed = 120 end
+
+        local distance = (target - root.Position).Magnitude
+        local tweenTime = distance / finalSpeed
+
+        local tween = TweenService:Create(root, TweenInfo.new(tweenTime, Enum.EasingStyle.Linear), {CFrame = CFrame.new(target)})
+        tween:Play()
+        tween.Completed:Wait()
+
+        if isKickFarming then wait(FarmDelay) end
+    end
+    kickTask = nil
+end
 
 -- ==================== FIND MUTATION FARM (RIÊNG - BÊN PHẢI) ====================
 local MutationFarmGroup = Tabs.Farm:AddRightGroupbox("Find Mutation Farm")
