@@ -29,8 +29,12 @@ local KickFarmSettingGroup = Tabs.Farm:AddLeftGroupbox("Kick Farm Setting")
 local KickRatio = 1
 local FarmDelay = 1
 local MoveDelay = 5
-local DelayAfterTP = 0        
-local TweenExtraSpeed = 0     
+local DelayAfterTP = 0
+local TweenExtraSpeed = 0
+
+-- ==================== FIND MUTATION ====================
+local SelectedMutations = {}        -- Multi select
+local EnableFindMutation = false
 
 KickFarmSettingGroup:AddLabel("Kick Ratio (0.1 - 1.0)")
 
@@ -104,7 +108,31 @@ end)
 
 KickFarmSettingGroup:AddDivider()
 
--- ==================== DELAY SAU TP (CHỈ DÙNG CHO TP FARM) ====================
+-- ==================== FIND MUTATION ====================
+KickFarmSettingGroup:AddLabel("Find Mutation (Multi)")
+
+local mutationList = {"Gold", "Diamond", "Plasma", "Molten", "Radioactive", "Shadow", "Electrified", "Rainbow"}
+
+KickFarmSettingGroup:AddDropdown("MutationDropdown", {
+    Text = "Find Mutation",
+    Values = mutationList,
+    Default = {},
+    Multi = true,
+    Callback = function(Value)
+        SelectedMutations = Value
+    end,
+})
+
+KickFarmSettingGroup:AddToggle("EnableFindMutationToggle", {
+    Text = "Enable Find Mutation",
+    Default = false,
+    Callback = function(state)
+        EnableFindMutation = state
+    end,
+})
+
+KickFarmSettingGroup:AddDivider()
+
 KickFarmSettingGroup:AddLabel("Delay After TP (before moving)")
 
 local DelayAfterTPSlider = KickFarmSettingGroup:AddSlider("DelayAfterTPSlider", {
@@ -138,44 +166,6 @@ local DelayAfterTPInput = KickFarmSettingGroup:AddInput("DelayAfterTPInput", {
 Options.DelayAfterTPSlider:OnChanged(function()
     local val = Options.DelayAfterTPSlider.Value
     DelayAfterTPInput:SetValue(tostring(val))
-end)
-
-KickFarmSettingGroup:AddDivider()
-
--- ==================== EXTRA TWEEN SPEED (CHỈ NORMAL FARM) ====================
-KickFarmSettingGroup:AddLabel("Extra Tween Speed (0 - 200)")
-
-local ExtraSpeedSlider = KickFarmSettingGroup:AddSlider("ExtraSpeedSlider", {
-    Text = "Extra Tween Speed",
-    Default = 0,
-    Min = 0,
-    Max = 200,
-    Rounding = 0,
-    Increment = 5,
-    Callback = function(v) TweenExtraSpeed = v end,
-})
-
-local ExtraSpeedInput = KickFarmSettingGroup:AddInput("ExtraSpeedInput", {
-    Default = "0",
-    Numeric = true,
-    Finished = true,
-    Placeholder = "0 - 200",
-    Callback = function(text)
-        local num = tonumber(text)
-        if num and num >= 0 and num <= 200 then
-            TweenExtraSpeed = num
-            ExtraSpeedSlider:SetValue(num)
-        else
-            TweenExtraSpeed = 0
-            ExtraSpeedSlider:SetValue(0)
-            ExtraSpeedInput:SetValue("0")
-        end
-    end,
-})
-
-Options.ExtraSpeedSlider:OnChanged(function()
-    local val = Options.ExtraSpeedSlider.Value
-    ExtraSpeedInput:SetValue(tostring(val))
 end)
 
 -- ==================== KICK FARM ====================
@@ -246,32 +236,50 @@ function StartKickFarm()
 
         wait(4)
 
+        -- ==================== FIND MUTATION LOGIC ====================
+        local hasDesiredMutation = false
+
+        if EnableFindMutation and #SelectedMutations > 0 then
+            for _, obj in ipairs(workspace:GetDescendants()) do
+                if obj:IsA("Model") and obj ~= character then
+                    local modelName = obj.Name:lower()
+                    for _, mut in ipairs(SelectedMutations) do
+                        if modelName:find(mut:lower()) then
+                            hasDesiredMutation = true
+                            break
+                        end
+                    end
+                    if hasDesiredMutation then break end
+                end
+            end
+        end
+
         local target = Vector3.new(699.77, 3.00, 231.99)
 
         if FarmMode == "Normal Farm" then
-            -- ==================== NORMAL FARM ====================
-            local baseSpeed = humanoid.WalkSpeed
-            local finalSpeed = baseSpeed + TweenExtraSpeed
-            if finalSpeed < 20 then finalSpeed = 120 end
+            if DelayAfterTP > 0 then wait(DelayAfterTP) end
 
-            local distance = (target - root.Position).Magnitude
-            local tweenTime = distance / finalSpeed
+            if hasDesiredMutation then
+                -- Có mutation mong muốn → tiếp tục farm bình thường (tween)
+                local baseSpeed = humanoid.WalkSpeed
+                local finalSpeed = baseSpeed + TweenExtraSpeed
+                if finalSpeed < 20 then finalSpeed = 120 end
 
-            local tweenInfo = TweenInfo.new(tweenTime, Enum.EasingStyle.Linear)
-            local tween = TweenService:Create(root, tweenInfo, {CFrame = CFrame.new(target)})
+                local distance = (target - root.Position).Magnitude
+                local tweenTime = distance / finalSpeed
 
-            tween:Play()
-            tween.Completed:Wait()
-
-        else
-            -- ==================== TP FARM ====================
-            root.CFrame = CFrame.new(674.96, -7.00, 232.41)
-            
-            -- Delay sau khi TP và trước khi TP cuối (chỉ Tp Farm)
-            if DelayAfterTP > 0 then
-                wait(DelayAfterTP)
+                local tweenInfo = TweenInfo.new(tweenTime, Enum.EasingStyle.Linear)
+                local tween = TweenService:Create(root, tweenInfo, {CFrame = CFrame.new(target)})
+                tween:Play()
+                tween.Completed:Wait()
+            else
+                -- Không có mutation → TP đến vị trí thoát
+                root.CFrame = CFrame.new(713.38, 3.00, 233.94)
             end
-            
+        else
+            -- Tp Farm
+            root.CFrame = CFrame.new(674.96, -7.00, 232.41)
+            if DelayAfterTP > 0 then wait(DelayAfterTP) end
             root.CFrame = CFrame.new(target)
         end
 
