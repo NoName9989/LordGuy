@@ -684,19 +684,18 @@ task.spawn(function()
     end
 end)
 
+-- ==================== TAB FPS BOOST ====================
+local FpsTab = Tabs["FPS Boost"]
+
 -- ==================== GROUP 1: FPS (TRÁI) ====================
 local FPSGroup = FpsTab:AddLeftGroupbox("FPS")
 
 FPSGroup:AddButton("Boost FPS", function()
-    -- Xóa 3 Product
     for i = 1, 3 do
         local product = workspace:FindFirstChild("Product " .. i)
-        if product then
-            product:Destroy()
-        end
+        if product then product:Destroy() end
     end
 
-    -- BASIC FPS BOOST
     settings().Rendering.QualityLevel = 1
     game:GetService("Lighting").GlobalShadows = false
 
@@ -714,7 +713,6 @@ local overlayFrame = nil
 
 local function createOverlay(color)
     if overlayFrame then overlayFrame:Destroy() end
-
     if not screenGui then
         screenGui = Instance.new("ScreenGui")
         screenGui.Name = "FPSOverlay"
@@ -724,9 +722,7 @@ local function createOverlay(color)
     end
 
     overlayFrame = Instance.new("Frame")
-    overlayFrame.Name = "Overlay"
-    overlayFrame.Size = UDim2.new(1, 0, 1, 0)
-    overlayFrame.Position = UDim2.new(0, 0, 0, 0)
+    overlayFrame.Size = UDim2.new(1,0,1,0)
     overlayFrame.BackgroundColor3 = color
     overlayFrame.BorderSizePixel = 0
     overlayFrame.ZIndex = 9999
@@ -738,7 +734,7 @@ FPSGroup:AddToggle("ScreenBlackToggle", {
     Default = false,
     Callback = function(state)
         if state then
-            createOverlay(Color3.new(0, 0, 0))   -- Màu đen
+            createOverlay(Color3.new(0,0,0))
         else
             if overlayFrame then overlayFrame:Destroy() end
         end
@@ -750,7 +746,7 @@ FPSGroup:AddToggle("ScreenWhiteToggle", {
     Default = false,
     Callback = function(state)
         if state then
-            createOverlay(Color3.new(1, 1, 1))   -- Màu trắng
+            createOverlay(Color3.new(1,1,1))
         else
             if overlayFrame then overlayFrame:Destroy() end
         end
@@ -758,14 +754,10 @@ FPSGroup:AddToggle("ScreenWhiteToggle", {
 })
 
 FPSGroup:AddButton("Reset Screen", function()
-    if overlayFrame then 
-        overlayFrame:Destroy() 
-        overlayFrame = nil 
-    end
-    if screenGui then 
-        screenGui:Destroy() 
-        screenGui = nil 
-    end
+    if overlayFrame then overlayFrame:Destroy() end
+    if screenGui then screenGui:Destroy() end
+    screenGui = nil
+    overlayFrame = nil
 end)
 
 -- ==================== GROUP 2: HIDE (PHẢI) ====================
