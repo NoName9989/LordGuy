@@ -222,24 +222,203 @@ function StartKickFarm()
     kickTask = nil
 end
 
--- ==================== WEIGHT FARM SETTING ====================
-local WeightFarmSettingGroup = Tabs.Farm:AddRightGroupbox("Weight Farm Setting")
+-- ==================== KICK FARM SETTING ====================
+local KickFarmSettingGroup = Tabs.Farm:AddLeftGroupbox("Kick Farm Setting")
 
-local SelectedWeightItem = "Wooden Stick"
+local KickRatio = 1
+local FarmDelay = 1
+local MoveDelay = 5
+local FarmMode = "Tp Farm"   -- Normal Farm / Tp Farm
 
-WeightFarmSettingGroup:AddDropdown("WeightItemDropdown", {
-    Text = "Select Weight Item",
-    Values = {
-        "Wooden Stick", "Bone Barbell", "Stone Block", "Copper Plate",
-        "Iron Plate", "Ice Barbell", "Donut Barbell", "Golden Barhell",
-        "Heaven Plate", "Mega Golden Barbell", "Neon Pulse", "Giant Gold Star Barbell"
-    },
+KickFarmSettingGroup:AddLabel("Kick Ratio (0.1 - 1.0)")
+
+local RatioSlider = KickFarmSettingGroup:AddSlider("RatioSlider", {
+    Text = "Kick Ratio",
     Default = 1,
-    Multi = false,
-    Callback = function(Value)
-        SelectedWeightItem = Value
+    Min = 0.1,
+    Max = 1,
+    Rounding = 4,
+    Callback = function(v) KickRatio = v end,
+})
+
+local RatioInput = KickFarmSettingGroup:AddInput("RatioInput", {
+    Default = "1",
+    Numeric = true,
+    Finished = true,
+    Placeholder = "0.1 - 1.0",
+    Callback = function(text)
+        local num = tonumber(text)
+        if num and num >= 0.1 and num <= 1 then
+            KickRatio = num
+            RatioSlider:SetValue(num)
+        else
+            KickRatio = 1
+            RatioSlider:SetValue(1)
+            RatioInput:SetValue("1")
+        end
     end,
 })
+
+Options.RatioSlider:OnChanged(function()
+    local val = Options.RatioSlider.Value
+    RatioInput:SetValue(val == 1 and "1" or string.format("%.4f", val))
+end)
+
+KickFarmSettingGroup:AddDivider()
+
+-- === FARM MODE DROPDOWN ===
+KickFarmSettingGroup:AddDropdown("FarmModeDropdown", {
+    Text = "Farm Mode",
+    Values = {"Normal Farm", "Tp Farm"},
+    Default = 2, -- mặc định Tp Farm
+    Multi = false,
+    Callback = function(Value)
+        FarmMode = Value
+    end,
+})
+
+KickFarmSettingGroup:AddDivider()
+
+KickFarmSettingGroup:AddLabel("Farm Delay (1 - 10 seconds)")
+
+local DelaySlider = KickFarmSettingGroup:AddSlider("DelaySlider", {
+    Text = "Farm Delay",
+    Default = 1,
+    Min = 1,
+    Max = 10,
+    Rounding = 1,
+    Callback = function(v) FarmDelay = v end,
+})
+
+-- (các input và slider delay khác giữ nguyên)
+local DelayInput = KickFarmSettingGroup:AddInput("DelayInput", {
+    Default = "1",
+    Numeric = true,
+    Finished = true,
+    Placeholder = "1 - 10",
+    Callback = function(text)
+        local num = tonumber(text)
+        if num and num >= 1 and num <= 10 then
+            FarmDelay = num
+            DelaySlider:SetValue(num)
+        else
+            FarmDelay = 1
+            DelaySlider:SetValue(1)
+            DelayInput:SetValue("1")
+        end
+    end,
+})
+
+Options.DelaySlider:OnChanged(function()
+    local val = Options.DelaySlider.Value
+    DelayInput:SetValue(val == 1 and "1" or string.format("%.1f", val))
+end)
+
+KickFarmSettingGroup:AddDivider()
+
+KickFarmSettingGroup:AddLabel("Delay Before Next (1 - 60 seconds)")
+
+local MoveDelaySlider = KickFarmSettingGroup:AddSlider("MoveDelaySlider", {
+    Text = "Delay Before Next",
+    Default = 5,
+    Min = 1,
+    Max = 60,
+    Rounding = 1,
+    Callback = function(v) MoveDelay = v end,
+})
+
+-- ==================== KICK FARM ====================
+local KickFarmGroup = Tabs.Farm:AddLeftGroupbox("Kick Farm")
+
+local isKickFarming = false
+local kickTask = nil
+
+KickFarmGroup:AddToggle("AutoKickFarmToggle", {
+    Text = "Enable Kick Farm",
+    Default = false,
+    Callback = function(state)
+        isKickFarming = state
+        if state then
+            if kickTask then task.cancel(kickTask) end
+            kickTask = task.spawn(StartKickFarm)
+        else
+            if kickTask then task.cancel(kickTask) end
+            kickTask = nil
+        end
+    end,
+})
+
+-- ==================== KICK FARM LOGIC (2 MODE) ====================
+function StartKickFarm()
+    while isKickFarming do
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local root = character:WaitForChild("HumanoidRootPart")
+        local humanoid = character:WaitForChild("Humanoid")
+
+        -- TP đến vị trí Kick
+        root.CFrame = CFrame.new(690.45, 2.99, 231.49)
+        wait(1)
+
+        -- Kick
+        game:GetService("ReplicatedStorage"):WaitForChild("Shared")
+            :WaitForChild("Packages"):WaitForChild("Network")
+            :WaitForChild("rev_KickEvent"):FireServer(KickRatio)
+        wait(1)
+
+        -- Đợi wave
+        local waveFolder = workspace:WaitForChild("Waves")
+        local waveDetected = false
+        local conn = waveFolder.ChildAdded:Connect(function(child)
+            if child:IsA("Model") or child:IsA("Folder") then waveDetected = true end
+        end)
+
+        local start = tick()
+        repeat
+            wait(0.5)
+            if tick() - start > 60 then break end
+        until waveDetected or not isKickFarming
+
+        conn:Disconnect()
+        if not isKickFarming then break end
+
+        wait(4)
+
+        -- ==================== MODE XỬ LÝ ====================
+        local target = Vector3.new(699.77, 3.00, 231.99)
+
+        if FarmMode == "Tp Farm" then
+            -- Mode cũ: Teleport
+            root.CFrame = CFrame.new(674.96, -7.00, 232.41)
+            wait(MoveDelay)
+            root.CFrame = CFrame.new(target)
+        else
+            -- Normal Farm: Bay nhanh về đích (không đi bộ)
+            root.CFrame = CFrame.new(674.96, -7.00, 232.41)
+            wait(MoveDelay)
+
+            local direction = (target - root.Position).Unit
+            local speed = 80  -- tốc độ bay (bạn có thể chỉnh)
+
+            -- Bay thẳng với tốc độ cao
+            local bv = Instance.new("BodyVelocity")
+            bv.MaxForce = Vector3.new(4000, 4000, 4000)
+            bv.Velocity = direction * speed
+            bv.Parent = root
+
+            -- Bay đến khi gần đích
+            while isKickFarming and (root.Position - target).Magnitude > 8 do
+                wait(0.1)
+            end
+
+            bv:Destroy()
+            root.CFrame = CFrame.new(target)  -- chỉnh vị trí chính xác
+        end
+
+        if isKickFarming then wait(FarmDelay) end
+    end
+    kickTask = nil
+end
 
 -- ==================== WEIGHT FARM ====================
 local WeightFarmGroup = Tabs.Farm:AddRightGroupbox("Weight Farm")
