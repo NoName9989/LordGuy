@@ -307,11 +307,10 @@ KickPowerFarmGroup:AddToggle("AutoX2WeightToggle", {
     end,
 })
 
--- Dropdown chọn kiểu Bonus Train
 KickPowerFarmGroup:AddDropdown("BonusTrainModeDropdown", {
     Text = "Bonus Train Mode",
     Values = {"Ngay lập tức", "Tích Luỹ"},
-    Default = 1,   -- Mặc định là "Ngay lập tức"
+    Default = 1,
     Multi = false,
     Callback = function(Value)
         BonusTrainMode = Value
@@ -350,6 +349,7 @@ task.spawn(function()
         local humanoid = character.Humanoid
         local backpack = player.Backpack
 
+        -- Khi tắt Enable Farm → dừng hoàn toàn
         if not isWeightFarming then
             if character:FindFirstChildWhichIsA("Tool") then
                 humanoid:UnequipTools()
@@ -360,12 +360,34 @@ task.spawn(function()
         -- ==================== AUTO BONUS TRAIN ====================
         if isAutoX2 then
             if BonusTrainMode == "Ngay lập tức" then
-                -- Click ngay khi nút xuất hiện
-                local gui = player.PlayerGui:FindFirstChild("KickUpgrades")
-                if gui then
-                    local bonusButton = gui:GetChildren()[4]
-                    if bonusButton and bonusButton.Visible and bonusButton:FindFirstChild("TextButton") then
-                        firesignal(bonusButton.TextButton.Activated)
+                -- Click ngay khi nút Bonus xuất hiện (theo cấu trúc GUI trong ảnh)
+                local kickGui = player.PlayerGui:FindFirstChild("KickUpgrades")
+                if kickGui then
+                    -- Tìm trong folder Bonus hoặc tất cả descendants
+                    local bonusFolder = kickGui:FindFirstChild("Bonus")
+                    local targetButton = nil
+
+                    if bonusFolder then
+                        for _, child in ipairs(bonusFolder:GetDescendants()) do
+                            if (child:IsA("TextButton") or child:IsA("ImageButton")) and child.Visible then
+                                targetButton = child
+                                break
+                            end
+                        end
+                    end
+
+                    -- Nếu không tìm thấy trong Bonus thì tìm trực tiếp trong KickUpgrades
+                    if not targetButton then
+                        for _, child in ipairs(kickGui:GetDescendants()) do
+                            if (child:IsA("TextButton") or child:IsA("ImageButton")) and child.Visible then
+                                targetButton = child
+                                break
+                            end
+                        end
+                    end
+
+                    if targetButton then
+                        firesignal(targetButton.Activated)
                     end
                 end
             else
