@@ -179,18 +179,6 @@ end)
 -- ==================== KICK FARM (BÊN PHẢI) ====================
 local KickFarmGroup = Tabs.Farm:AddRightGroupbox("Kick Farm")
 
-local FarmMode = "Normal Farm"
-
-KickFarmGroup:AddDropdown("FarmModeDropdown", {
-    Text = "Farm Mode",
-    Values = {"Normal Farm", "Tp Farm"},
-    Default = 1,
-    Multi = false,
-    Callback = function(Value)
-        FarmMode = Value
-    end,
-})
-
 local isKickFarming = false
 local kickTask = nil
 
@@ -209,13 +197,14 @@ KickFarmGroup:AddToggle("AutoKickFarmToggle", {
     end,
 })
 
--- ==================== FIND MUTATION GROUP (BÊN PHẢI) ====================
-local MutationGroup = Tabs.Farm:AddRightGroupbox("Find Mutation")
+-- ==================== FIND MUTATION FARM (RIÊNG) ====================
+local MutationFarmGroup = Tabs.Farm:AddRightGroupbox("Find Mutation Farm")
 
+local isFindMutationFarming = false
+local mutationTask = nil
 local SelectedMutations = {}
-local EnableFindMutation = false
 
-MutationGroup:AddDropdown("MutationDropdown", {
+MutationFarmGroup:AddDropdown("MutationDropdown", {
     Text = "Find Mutation (Multi)",
     Values = {"Gold", "Diamond", "Plasma", "Molten", "Radioactive", "Shadow", "Electrified", "Rainbow"},
     Default = {},
@@ -225,11 +214,18 @@ MutationGroup:AddDropdown("MutationDropdown", {
     end,
 })
 
-MutationGroup:AddToggle("EnableFindMutationToggle", {
-    Text = "Enable Find Mutation",
+MutationFarmGroup:AddToggle("EnableFindMutationFarmToggle", {
+    Text = "Enable Find Mutation Farm",
     Default = false,
     Callback = function(state)
-        EnableFindMutation = state
+        isFindMutationFarming = state
+        if state then
+            if mutationTask then task.cancel(mutationTask) end
+            mutationTask = task.spawn(StartFindMutationFarm)
+        else
+            if mutationTask then task.cancel(mutationTask) end
+            mutationTask = nil
+        end
     end,
 })
 
@@ -268,57 +264,74 @@ function StartKickFarm()
 
         wait(4)
 
-        -- ==================== FIND MUTATION LOGIC ====================
-        local shouldContinueFarm = true
+-- ==================== FIND MUTATION FARM LOGIC (RIÊNG) ====================
+function StartFindMutationFarm()
+    local TweenService = game:GetService("TweenService")
+    while isFindMutationFarming do
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local root = character:WaitForChild("HumanoidRootPart")
+        local humanoid = character:WaitForChild("Humanoid")
 
-        if EnableFindMutation and #SelectedMutations > 0 then
-            shouldContinueFarm = false
-            local debris = workspace:FindFirstChild("Debris")
-            if debris then
-                for _, model in ipairs(debris:GetChildren()) do
-                    if model:IsA("Model") then
-                        for _, mutName in ipairs(SelectedMutations) do
-                            if model:FindFirstChild(mutName) or model:FindFirstChild(mutName, true) then
-                                shouldContinueFarm = true
-                                print("✅ TÌM THẤY MUTATION:", mutName, "trong", model.Name)
-                                break
-                            end
+        root.CFrame = CFrame.new(690.45, 2.99, 231.49)
+        wait(1)
+
+        game:GetService("ReplicatedStorage"):WaitForChild("Shared")
+            :WaitForChild("Packages"):WaitForChild("Network")
+            :WaitForChild("rev_KickEvent"):FireServer(KickRatio)
+        wait(1)
+
+        -- đợi wave + 4s
+        local waveFolder = workspace:WaitForChild("Waves")
+        local waveDetected = false
+        local conn = waveFolder.ChildAdded:Connect(function(child)
+            if child:IsA("Model") or child:IsA("Folder") then waveDetected = true end
+        end)
+
+        local start = tick()
+        repeat wait(0.5) until waveDetected or not isFindMutationFarming
+        conn:Disconnect()
+        if not isFindMutationFarming then break end
+        wait(4)
+
+        -- ==================== FIND MUTATION ====================
+        local hasDesiredMutation = false
+        local debris = workspace:FindFirstChild("Debris")
+        if debris then
+            for _, model in ipairs(debris:GetChildren()) do
+                if model:IsA("Model") then
+                    for _, mutName in ipairs(SelectedMutations) do
+                        if model:FindFirstChild(mutName) or model:FindFirstChild(mutName, true) then
+                            hasDesiredMutation = true
+                            break
                         end
-                        if shouldContinueFarm then break end
                     end
+                    if hasDesiredMutation then break end
                 end
             end
         end
 
         local target = Vector3.new(699.77, 3.00, 231.99)
 
-        if FarmMode == "Normal Farm" then
-            if DelayAfterTP > 0 then wait(DelayAfterTP) end
+        if hasDesiredMutation then
+            -- Farm bình thường
+            local baseSpeed = humanoid.WalkSpeed
+            local finalSpeed = baseSpeed + TweenExtraSpeed
+            if finalSpeed < 20 then finalSpeed = 120 end
+            local distance = (target - root.Position).Magnitude
+            local tweenTime = distance / finalSpeed
 
-            if shouldContinueFarm then
-                local baseSpeed = humanoid.WalkSpeed
-                local finalSpeed = baseSpeed + TweenExtraSpeed
-                if finalSpeed < 20 then finalSpeed = 120 end
-
-                local distance = (target - root.Position).Magnitude
-                local tweenTime = distance / finalSpeed
-
-                local tweenInfo = TweenInfo.new(tweenTime, Enum.EasingStyle.Linear)
-                local tween = TweenService:Create(root, tweenInfo, {CFrame = CFrame.new(target)})
-                tween:Play()
-                tween.Completed:Wait()
-            else
-                root.CFrame = CFrame.new(713.38, 3.00, 233.94)
-            end
+            local tween = TweenService:Create(root, TweenInfo.new(tweenTime, Enum.EasingStyle.Linear), {CFrame = CFrame.new(target)})
+            tween:Play()
+            tween.Completed:Wait()
         else
-            root.CFrame = CFrame.new(674.96, -7.00, 232.41)
-            if DelayAfterTP > 0 then wait(DelayAfterTP) end
-            root.CFrame = CFrame.new(target)
+            -- Không có mutation → TP thoát
+            root.CFrame = CFrame.new(713.38, 3.00, 233.94)
         end
 
-        if isKickFarming then wait(FarmDelay) end
+        if isFindMutationFarming then wait(FarmDelay) end
     end
-    kickTask = nil
+    mutationTask = nil
 end
 
 -- ==================== KICK POWER FARM ====================
