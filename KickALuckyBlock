@@ -23,7 +23,311 @@ local Tabs = {
     ["UI Settings"] = Window:AddTab("UI Settings", "settings"),
 }
 
+-- ==================== KICK FARM SETTING ====================
+local KickFarmSettingGroup = Tabs.Farm:AddLeftGroupbox("Kick Farm Setting")
 
+local KickRatio = 1
+local FarmDelay = 1
+local MoveDelay = 5
+local DelayAfterTP = 0
+local TweenExtraSpeed = 0
+
+-- ==================== FIND MUTATION ====================
+local SelectedMutations = {}
+local EnableFindMutation = false
+
+KickFarmSettingGroup:AddLabel("Kick Ratio (0.1 - 1.0)")
+
+local RatioSlider = KickFarmSettingGroup:AddSlider("RatioSlider", {
+    Text = "Kick Ratio",
+    Default = 1,
+    Min = 0.1,
+    Max = 1,
+    Rounding = 4,
+    Callback = function(v) KickRatio = v end,
+})
+
+local RatioInput = KickFarmSettingGroup:AddInput("RatioInput", {
+    Default = "1",
+    Numeric = true,
+    Finished = true,
+    Placeholder = "0.1 - 1.0",
+    Callback = function(text)
+        local num = tonumber(text)
+        if num and num >= 0.1 and num <= 1 then
+            KickRatio = num
+            RatioSlider:SetValue(num)
+        else
+            KickRatio = 1
+            RatioSlider:SetValue(1)
+            RatioInput:SetValue("1")
+        end
+    end,
+})
+
+Options.RatioSlider:OnChanged(function()
+    local val = Options.RatioSlider.Value
+    RatioInput:SetValue(val == 1 and "1" or string.format("%.4f", val))
+end)
+
+KickFarmSettingGroup:AddDivider()
+
+KickFarmSettingGroup:AddLabel("Farm Delay (1 - 10 seconds)")
+
+local DelaySlider = KickFarmSettingGroup:AddSlider("DelaySlider", {
+    Text = "Farm Delay",
+    Default = 1,
+    Min = 1,
+    Max = 10,
+    Rounding = 1,
+    Callback = function(v) FarmDelay = v end,
+})
+
+local DelayInput = KickFarmSettingGroup:AddInput("DelayInput", {
+    Default = "1",
+    Numeric = true,
+    Finished = true,
+    Placeholder = "1 - 10",
+    Callback = function(text)
+        local num = tonumber(text)
+        if num and num >= 1 and num <= 10 then
+            FarmDelay = num
+            DelaySlider:SetValue(num)
+        else
+            FarmDelay = 1
+            DelaySlider:SetValue(1)
+            DelayInput:SetValue("1")
+        end
+    end,
+})
+
+Options.DelaySlider:OnChanged(function()
+    local val = Options.DelaySlider.Value
+    DelayInput:SetValue(val == 1 and "1" or string.format("%.1f", val))
+end)
+
+KickFarmSettingGroup:AddDivider()
+
+KickFarmSettingGroup:AddLabel("Find Mutation (Multi)")
+
+local mutationList = {"Gold", "Diamond", "Plasma", "Molten", "Radioactive", "Shadow", "Electrified", "Rainbow"}
+
+KickFarmSettingGroup:AddDropdown("MutationDropdown", {
+    Text = "Find Mutation",
+    Values = mutationList,
+    Default = {},
+    Multi = true,
+    Callback = function(Value)
+        SelectedMutations = Value
+    end,
+})
+
+KickFarmSettingGroup:AddToggle("EnableFindMutationToggle", {
+    Text = "Enable Find Mutation",
+    Default = false,
+    Callback = function(state)
+        EnableFindMutation = state
+    end,
+})
+
+KickFarmSettingGroup:AddDivider()
+
+KickFarmSettingGroup:AddLabel("Delay After TP (before moving)")
+
+local DelayAfterTPSlider = KickFarmSettingGroup:AddSlider("DelayAfterTPSlider", {
+    Text = "Delay After TP",
+    Default = 0,
+    Min = 0,
+    Max = 120,
+    Rounding = 0,
+    Increment = 5,
+    Callback = function(v) DelayAfterTP = v end,
+})
+
+local DelayAfterTPInput = KickFarmSettingGroup:AddInput("DelayAfterTPInput", {
+    Default = "0",
+    Numeric = true,
+    Finished = true,
+    Placeholder = "0 - 120",
+    Callback = function(text)
+        local num = tonumber(text)
+        if num and num >= 0 and num <= 120 then
+            DelayAfterTP = num
+            DelayAfterTPSlider:SetValue(num)
+        else
+            DelayAfterTP = 0
+            DelayAfterTPSlider:SetValue(0)
+            DelayAfterTPInput:SetValue("0")
+        end
+    end,
+})
+
+Options.DelayAfterTPSlider:OnChanged(function()
+    local val = Options.DelayAfterTPSlider.Value
+    DelayAfterTPInput:SetValue(tostring(val))
+end)
+
+KickFarmSettingGroup:AddDivider()
+
+KickFarmSettingGroup:AddLabel("Extra Tween Speed (0 - 200)")
+
+local ExtraSpeedSlider = KickFarmSettingGroup:AddSlider("ExtraSpeedSlider", {
+    Text = "Extra Tween Speed",
+    Default = 0,
+    Min = 0,
+    Max = 200,
+    Rounding = 0,
+    Increment = 5,
+    Callback = function(v) TweenExtraSpeed = v end,
+})
+
+local ExtraSpeedInput = KickFarmSettingGroup:AddInput("ExtraSpeedInput", {
+    Default = "0",
+    Numeric = true,
+    Finished = true,
+    Placeholder = "0 - 200",
+    Callback = function(text)
+        local num = tonumber(text)
+        if num and num >= 0 and num <= 200 then
+            TweenExtraSpeed = num
+            ExtraSpeedSlider:SetValue(num)
+        else
+            TweenExtraSpeed = 0
+            ExtraSpeedSlider:SetValue(0)
+            ExtraSpeedInput:SetValue("0")
+        end
+    end,
+})
+
+Options.ExtraSpeedSlider:OnChanged(function()
+    local val = Options.ExtraSpeedSlider.Value
+    ExtraSpeedInput:SetValue(tostring(val))
+end)
+
+-- ==================== KICK FARM (BÊN PHẢI) ====================
+local KickFarmGroup = Tabs.Farm:AddRightGroupbox("Kick Farm")
+
+local FarmMode = "Normal Farm"
+
+KickFarmGroup:AddDropdown("FarmModeDropdown", {
+    Text = "Farm Mode",
+    Values = {"Normal Farm", "Tp Farm"},
+    Default = 1,
+    Multi = false,
+    Callback = function(Value)
+        FarmMode = Value
+    end,
+})
+
+local isKickFarming = false
+local kickTask = nil
+
+KickFarmGroup:AddToggle("AutoKickFarmToggle", {
+    Text = "Enable Kick Farm",
+    Default = false,
+    Callback = function(state)
+        isKickFarming = state
+        if state then
+            if kickTask then task.cancel(kickTask) end
+            kickTask = task.spawn(StartKickFarm)
+        else
+            if kickTask then task.cancel(kickTask) end
+            kickTask = nil
+        end
+    end,
+})
+
+-- ==================== KICK FARM LOGIC ====================
+function StartKickFarm()
+    local TweenService = game:GetService("TweenService")
+
+    while isKickFarming do
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local root = character:WaitForChild("HumanoidRootPart")
+        local humanoid = character:WaitForChild("Humanoid")
+
+        root.CFrame = CFrame.new(690.45, 2.99, 231.49)
+        wait(1)
+
+        game:GetService("ReplicatedStorage"):WaitForChild("Shared")
+            :WaitForChild("Packages"):WaitForChild("Network")
+            :WaitForChild("rev_KickEvent"):FireServer(KickRatio)
+        wait(1)
+
+        local waveFolder = workspace:WaitForChild("Waves")
+        local waveDetected = false
+        local conn = waveFolder.ChildAdded:Connect(function(child)
+            if child:IsA("Model") or child:IsA("Folder") then waveDetected = true end
+        end)
+
+        local start = tick()
+        repeat
+            wait(0.5)
+            if tick() - start > 60 then break end
+        until waveDetected or not isKickFarming
+
+        conn:Disconnect()
+        if not isKickFarming then break end
+
+        wait(4)
+
+        -- ==================== FIND MUTATION LOGIC ====================
+        local shouldFarmNormal = true
+
+        if EnableFindMutation and #SelectedMutations > 0 then
+            local hasDesiredMutation = false
+            local debris = workspace:FindFirstChild("Debris")
+            if debris then
+                for _, model in ipairs(debris:GetChildren()) do
+                    if model:IsA("Model") then
+                        for _, mutName in ipairs(SelectedMutations) do
+                            if model:FindFirstChild(mutName) or model:FindFirstChild(mutName, true) then
+                                hasDesiredMutation = true
+                                print("✅ TÌM THẤY MUTATION:", mutName, "trong", model.Name)
+                                break
+                            end
+                        end
+                        if hasDesiredMutation then break end
+                    end
+                end
+            end
+            shouldFarmNormal = hasDesiredMutation
+        end
+
+        local target = Vector3.new(699.77, 3.00, 231.99)
+
+        if FarmMode == "Normal Farm" then
+            if DelayAfterTP > 0 then wait(DelayAfterTP) end
+
+            if shouldFarmNormal then
+                -- Farm bình thường
+                local baseSpeed = humanoid.WalkSpeed
+                local finalSpeed = baseSpeed + TweenExtraSpeed
+                if finalSpeed < 20 then finalSpeed = 120 end
+
+                local distance = (target - root.Position).Magnitude
+                local tweenTime = distance / finalSpeed
+
+                local tweenInfo = TweenInfo.new(tweenTime, Enum.EasingStyle.Linear)
+                local tween = TweenService:Create(root, tweenInfo, {CFrame = CFrame.new(target)})
+                tween:Play()
+                tween.Completed:Wait()
+            else
+                -- Không có mutation → TP thoát
+                root.CFrame = CFrame.new(713.38, 3.00, 233.94)
+            end
+        else
+            -- Tp Farm
+            root.CFrame = CFrame.new(674.96, -7.00, 232.41)
+            if DelayAfterTP > 0 then wait(DelayAfterTP) end
+            root.CFrame = CFrame.new(target)
+        end
+
+        if isKickFarming then wait(FarmDelay) end
+    end
+    kickTask = nil
+end
 
 -- ==================== KICK POWER FARM ====================
 local KickPowerFarmGroup = Tabs.Farm:AddRightGroupbox("Kick Power Farm")
