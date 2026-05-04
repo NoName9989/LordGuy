@@ -141,8 +141,19 @@ end)
 -- ==================== KICK FARM (BÊN PHẢI) ====================
 local KickFarmGroup = Tabs.Farm:AddRightGroupbox("Kick Farm")
 
+local FarmMode = "Normal Farm"
 local isKickFarming = false
 local kickTask = nil
+
+KickFarmGroup:AddDropdown("FarmModeDropdown", {
+    Text = "Farm Mode",
+    Values = {"Normal Farm", "Tp Farm"},
+    Default = 1,
+    Multi = false,
+    Callback = function(Value)
+        FarmMode = Value
+    end,
+})
 
 KickFarmGroup:AddToggle("AutoKickFarmToggle", {
     Text = "Enable Kick Farm",
