@@ -248,7 +248,7 @@ MutationFarmGroup:AddToggle("EnableFindMutationFarmToggle", {
     end,
 })
 
--- ==================== FIND MUTATION FARM LOGIC (THEO THỨ TỰ BẠN YÊU CẦU) ====================
+-- ==================== FIND MUTATION FARM LOGIC ====================
 function StartFindMutationFarm()
     local TweenService = game:GetService("TweenService")
 
@@ -284,29 +284,52 @@ function StartFindMutationFarm()
         conn:Disconnect()
         if not isFindMutationFarming then break end
 
-        -- 4. Đợi 4 giây sau wave
+        -- 4. Đợi đúng 4 giây sau wave
         wait(4)
 
-        -- 5. Scan mutation trong Debris
+        -- 5. Scan morph + check mutation (dùng code bạn đưa)
         local hasDesiredMutation = false
-        local debris = workspace:FindFirstChild("Debris")
-        if debris then
-            for _, model in ipairs(debris:GetChildren()) do
-                if model:IsA("Model") then
-                    for _, mutName in ipairs(SelectedMutations) do
-                        if model:FindFirstChild(mutName) or model:FindFirstChild(mutName, true) then
-                            hasDesiredMutation = true
-                            break
+
+        local hrpPos = root.Position
+        local bestModel = nil
+        local bestDist = math.huge
+
+        for _, obj in ipairs(workspace:GetDescendants()) do
+            if obj:IsA("Model") 
+                and obj ~= character 
+                and obj.PrimaryPart then
+                
+                local dist = (obj.PrimaryPart.Position - hrpPos).Magnitude
+                
+                if dist < 35 and dist < bestDist then
+                    local partCount = 0
+                    for _, child in ipairs(obj:GetChildren()) do
+                        if child:IsA("BasePart") or child:IsA("MeshPart") then
+                            partCount += 1
                         end
                     end
-                    if hasDesiredMutation then break end
+                    
+                    if partCount >= 5 or obj:FindFirstChild("Humanoid") then
+                        bestDist = dist
+                        bestModel = obj
+                    end
+                end
+            end
+        end
+
+        -- Sau khi tìm được morph thì check mutation bên trong
+        if bestModel then
+            for _, mutName in ipairs(SelectedMutations) do
+                if bestModel:FindFirstChild(mutName) or bestModel:FindFirstChild(mutName, true) then
+                    hasDesiredMutation = true
+                    print("✅ TÌM THẤY MUTATION:", mutName, "trong morph:", bestModel.Name)
+                    break
                 end
             end
         end
 
         local target = Vector3.new(699.77, 3.00, 231.99)
 
-        -- 6 & 7. Quyết định
         if hasDesiredMutation then
             -- Có mutation → tween về đích
             local baseSpeed = humanoid.WalkSpeed
@@ -319,7 +342,7 @@ function StartFindMutationFarm()
             tween:Play()
             tween.Completed:Wait()
         else
-            -- Không có → TP huỷ
+            -- Không có mutation → TP huỷ
             root.CFrame = CFrame.new(713.38, 3.00, 233.94)
         end
 
