@@ -625,7 +625,7 @@ WeightsShopGroup:AddDropdown("WeightShopDropdown", {
     Text = "Select Weight Item",
     Values = {
         "Wooden Stick", "Bone Barbell", "Stone Block", "Copper Plate",
-        "Iron Plate", "Ice Barbell", "Donut Barbell", "Golden Barhell",
+        "Iron Plate", "Ice Barbell", "Donut Barbell", "Golden Barbell",
         "Heaven Plate", "Mega Golden Barbell", "Neon Pulse", "Giant Gold Star Barbell"
     },
     Default = 1,
@@ -644,7 +644,7 @@ WeightsShopGroup:AddToggle("AutoBuyWeightToggle", {
     end,
 })
 
--- Button Buy thủ công (giữ nguyên)
+-- Button Buy thủ công 
 WeightsShopGroup:AddButton("Buy Once", function()
     local buyArgs = {"WeightShop", SelectedWeightShopItem}
     game:GetService("ReplicatedStorage"):WaitForChild("Shared")
