@@ -8,7 +8,7 @@ local Options = Library.Options
 
 local Window = Library:CreateWindow({
     Title = "LordCat",
-    Footer = "Version 1.1",
+    Footer = "Version 1.2",
     Icon = 73071239069153,
     NotifySide = "Right",
     ShowCustomCursor = true,
