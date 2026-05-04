@@ -169,17 +169,18 @@ function StartKickFarm()
         conn:Disconnect()
         if not isKickFarming then break end
 
-        wait(4)   -- Đợi 4 giây sau khi wave xong (như bạn yêu cầu)
+        wait(4)   -- Đợi 4 giây sau khi wave xuất hiện
 
         local target = Vector3.new(699.77, 3.00, 231.99)
 
         if FarmMode == "Normal Farm" then
-            -- ==================== NORMAL FARM: Tween bay thẳng về đích ====================
+            -- ==================== NORMAL FARM: Tween theo tốc độ đi bộ thực tế sau wave ====================
             local distance = (target - root.Position).Magnitude
-            local currentSpeed = root.Velocity.Magnitude
-            if currentSpeed < 40 then currentSpeed = 130 end   -- tốc độ bay tối thiểu
+            local walkSpeed = humanoid.WalkSpeed   -- Tốc độ đi bộ thực tế (studs/s)
 
-            local tweenTime = distance / currentSpeed
+            if walkSpeed < 10 then walkSpeed = 16 end   -- fallback nếu lag
+
+            local tweenTime = distance / walkSpeed     -- Tính thời gian tween theo studs/s
 
             local tweenInfo = TweenInfo.new(tweenTime, Enum.EasingStyle.Linear)
             local tween = TweenService:Create(root, tweenInfo, {CFrame = CFrame.new(target)})
