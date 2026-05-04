@@ -191,7 +191,7 @@ MutationFarmGroup:AddToggle("EnableFindMutationFarmToggle", {
     end,
 })
 
--- ==================== FIND MUTATION FARM LOGIC ====================
+-- ==================== FIND MUTATION FARM LOGIC (THEO THỨ TỰ BẠN YÊU CẦU) ====================
 function StartFindMutationFarm()
     local TweenService = game:GetService("TweenService")
 
@@ -227,7 +227,7 @@ function StartFindMutationFarm()
         conn:Disconnect()
         if not isFindMutationFarming then break end
 
-        -- 4. Đợi đúng 4 giây sau khi wave xuất hiện
+        -- 4. Đợi 4 giây sau wave
         wait(4)
 
         -- 5. Scan mutation trong Debris
@@ -249,13 +249,12 @@ function StartFindMutationFarm()
 
         local target = Vector3.new(699.77, 3.00, 231.99)
 
-        -- 6 & 7. Quyết định farm hay huỷ
+        -- 6 & 7. Quyết định
         if hasDesiredMutation then
             -- Có mutation → tween về đích
             local baseSpeed = humanoid.WalkSpeed
             local finalSpeed = baseSpeed + TweenExtraSpeed
             if finalSpeed < 20 then finalSpeed = 120 end
-
             local distance = (target - root.Position).Magnitude
             local tweenTime = distance / finalSpeed
 
@@ -263,7 +262,7 @@ function StartFindMutationFarm()
             tween:Play()
             tween.Completed:Wait()
         else
-            -- Không có mutation → TP huỷ
+            -- Không có → TP huỷ
             root.CFrame = CFrame.new(713.38, 3.00, 233.94)
         end
 
