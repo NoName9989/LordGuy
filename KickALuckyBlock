@@ -684,9 +684,6 @@ task.spawn(function()
     end
 end)
 
--- ==================== TAB FPS BOOST ====================
-local FpsTab = Tabs["FPS Boost"]
-
 -- ==================== GROUP 1: FPS (TRÁI) ====================
 local FPSGroup = FpsTab:AddLeftGroupbox("FPS")
 
@@ -699,7 +696,7 @@ FPSGroup:AddButton("Boost FPS", function()
         end
     end
 
-    -- BASIC FPS BOOST (chạy nguyên đoạn bạn đưa)
+    -- BASIC FPS BOOST
     settings().Rendering.QualityLevel = 1
     game:GetService("Lighting").GlobalShadows = false
 
@@ -708,6 +705,66 @@ FPSGroup:AddButton("Boost FPS", function()
             v.Material = Enum.Material.SmoothPlastic
             v.Reflectance = 0
         end
+    end
+end)
+
+-- ==================== SCREEN BLACK & WHITE ====================
+local screenGui = nil
+local overlayFrame = nil
+
+local function createOverlay(color)
+    if overlayFrame then overlayFrame:Destroy() end
+
+    if not screenGui then
+        screenGui = Instance.new("ScreenGui")
+        screenGui.Name = "FPSOverlay"
+        screenGui.ResetOnSpawn = false
+        screenGui.IgnoreGuiInset = true
+        screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+    end
+
+    overlayFrame = Instance.new("Frame")
+    overlayFrame.Name = "Overlay"
+    overlayFrame.Size = UDim2.new(1, 0, 1, 0)
+    overlayFrame.Position = UDim2.new(0, 0, 0, 0)
+    overlayFrame.BackgroundColor3 = color
+    overlayFrame.BorderSizePixel = 0
+    overlayFrame.ZIndex = 9999
+    overlayFrame.Parent = screenGui
+end
+
+FPSGroup:AddToggle("ScreenBlackToggle", {
+    Text = "Screen Black",
+    Default = false,
+    Callback = function(state)
+        if state then
+            createOverlay(Color3.new(0, 0, 0))   -- Màu đen
+        else
+            if overlayFrame then overlayFrame:Destroy() end
+        end
+    end,
+})
+
+FPSGroup:AddToggle("ScreenWhiteToggle", {
+    Text = "Screen White",
+    Default = false,
+    Callback = function(state)
+        if state then
+            createOverlay(Color3.new(1, 1, 1))   -- Màu trắng
+        else
+            if overlayFrame then overlayFrame:Destroy() end
+        end
+    end,
+})
+
+FPSGroup:AddButton("Reset Screen", function()
+    if overlayFrame then 
+        overlayFrame:Destroy() 
+        overlayFrame = nil 
+    end
+    if screenGui then 
+        screenGui:Destroy() 
+        screenGui = nil 
     end
 end)
 
