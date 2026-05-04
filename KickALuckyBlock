@@ -108,7 +108,7 @@ local FarmMode = "Normal Farm"   -- Base là Normal Farm
 KickFarmGroup:AddDropdown("FarmModeDropdown", {
     Text = "Farm Mode",
     Values = {"Normal Farm", "Tp Farm"},
-    Default = 1,   -- Mặc định Normal Farm
+    Default = 1,
     Multi = false,
     Callback = function(Value)
         FarmMode = Value
@@ -169,40 +169,28 @@ function StartKickFarm()
         conn:Disconnect()
         if not isKickFarming then break end
 
-        wait(4)
+        wait(4)   -- Đợi 4 giây sau khi wave xong (như bạn yêu cầu)
 
         local target = Vector3.new(699.77, 3.00, 231.99)
 
-        -- TP đến vị trí trung gian (điểm xuất phát bay)
-        root.CFrame = CFrame.new(674.96, -7.00, 232.41)
-
         if FarmMode == "Normal Farm" then
-            -- ==================== NORMAL FARM (Tween theo tốc độ sau kick) ====================
-            wait(0.3) -- delay nhỏ để nhân vật có velocity sau kick
-
-            -- Lấy tốc độ hiện tại của người chơi sau khi kick
-            local currentSpeed = root.Velocity.Magnitude
-            if currentSpeed < 30 then currentSpeed = 120 end   -- tốc độ tối thiểu nếu lag
-
+            -- ==================== NORMAL FARM: Tween bay thẳng về đích ====================
             local distance = (target - root.Position).Magnitude
-            local tweenTime = distance / currentSpeed   -- thời gian tween = khoảng cách / tốc độ
+            local currentSpeed = root.Velocity.Magnitude
+            if currentSpeed < 40 then currentSpeed = 130 end   -- tốc độ bay tối thiểu
 
-            local tweenInfo = TweenInfo.new(
-                tweenTime,
-                Enum.EasingStyle.Linear,
-                Enum.EasingDirection.Out,
-                0,
-                false,
-                0
-            )
+            local tweenTime = distance / currentSpeed
 
+            local tweenInfo = TweenInfo.new(tweenTime, Enum.EasingStyle.Linear)
             local tween = TweenService:Create(root, tweenInfo, {CFrame = CFrame.new(target)})
+
             tween:Play()
             tween.Completed:Wait()
 
         else
             -- ==================== TP FARM (giữ nguyên cũ) ====================
-            wait(MoveDelay)           -- Chỉ Tp Farm mới dùng MoveDelay
+            root.CFrame = CFrame.new(674.96, -7.00, 232.41)
+            wait(MoveDelay)
             root.CFrame = CFrame.new(target)
         end
 
