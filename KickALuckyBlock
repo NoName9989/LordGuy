@@ -103,12 +103,12 @@ end)
 -- ==================== KICK FARM ====================
 local KickFarmGroup = Tabs.Farm:AddLeftGroupbox("Kick Farm")
 
-local FarmMode = "Tp Farm"   -- Normal Farm / Tp Farm
+local FarmMode = "Normal Farm"   -- Base là Normal Farm
 
 KickFarmGroup:AddDropdown("FarmModeDropdown", {
     Text = "Farm Mode",
     Values = {"Normal Farm", "Tp Farm"},
-    Default = 2,
+    Default = 1,   -- Mặc định Normal Farm
     Multi = false,
     Callback = function(Value)
         FarmMode = Value
@@ -135,6 +135,8 @@ KickFarmGroup:AddToggle("AutoKickFarmToggle", {
 
 -- ==================== KICK FARM LOGIC ====================
 function StartKickFarm()
+    local TweenService = game:GetService("TweenService")
+
     while isKickFarming do
         local player = game.Players.LocalPlayer
         local character = player.Character or player.CharacterAdded:Wait()
@@ -171,29 +173,36 @@ function StartKickFarm()
 
         local target = Vector3.new(699.77, 3.00, 231.99)
 
-        if FarmMode == "Tp Farm" then
-            -- ==================== TP FARM ====================
-            root.CFrame = CFrame.new(674.96, -7.00, 232.41)
-            wait(MoveDelay)           -- Chỉ dùng MoveDelay ở mode Tp Farm
-            root.CFrame = CFrame.new(target)
+        -- TP đến vị trí trung gian (điểm xuất phát bay)
+        root.CFrame = CFrame.new(674.96, -7.00, 232.41)
+
+        if FarmMode == "Normal Farm" then
+            -- ==================== NORMAL FARM (Tween theo tốc độ sau kick) ====================
+            wait(0.3) -- delay nhỏ để nhân vật có velocity sau kick
+
+            -- Lấy tốc độ hiện tại của người chơi sau khi kick
+            local currentSpeed = root.Velocity.Magnitude
+            if currentSpeed < 30 then currentSpeed = 120 end   -- tốc độ tối thiểu nếu lag
+
+            local distance = (target - root.Position).Magnitude
+            local tweenTime = distance / currentSpeed   -- thời gian tween = khoảng cách / tốc độ
+
+            local tweenInfo = TweenInfo.new(
+                tweenTime,
+                Enum.EasingStyle.Linear,
+                Enum.EasingDirection.Out,
+                0,
+                false,
+                0
+            )
+
+            local tween = TweenService:Create(root, tweenInfo, {CFrame = CFrame.new(target)})
+            tween:Play()
+            tween.Completed:Wait()
+
         else
-            -- ==================== NORMAL FARM (Bay nhanh) ====================
-            root.CFrame = CFrame.new(674.96, -7.00, 232.41)
-            wait(0.5)
-
-            local direction = (target - root.Position).Unit
-            local speed = 120   -- Tốc độ bay (có thể chỉnh)
-
-            local bv = Instance.new("BodyVelocity")
-            bv.MaxForce = Vector3.new(10000, 10000, 10000)
-            bv.Velocity = direction * speed
-            bv.Parent = root
-
-            while isKickFarming and (root.Position - target).Magnitude > 6 do
-                wait(0.1)
-            end
-
-            bv:Destroy()
+            -- ==================== TP FARM (giữ nguyên cũ) ====================
+            wait(MoveDelay)           -- Chỉ Tp Farm mới dùng MoveDelay
             root.CFrame = CFrame.new(target)
         end
 
