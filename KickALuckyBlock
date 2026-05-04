@@ -28,9 +28,9 @@ local KickFarmSettingGroup = Tabs.Farm:AddLeftGroupbox("Kick Farm Setting")
 
 local KickRatio = 1
 local FarmDelay = 1
-local MoveDelay = 5          -- Chỉ dùng cho Tp Farm
-local PreFlyDelay = 0        -- Delay trước khi tween/bay (mới)
-local TweenExtraSpeed = 0    -- Tốc độ cộng thêm vào WalkSpeed (mới)
+local MoveDelay = 5
+local DelayAfterTP = 0        -- Delay sau khi TP và trước khi tween/bay
+local TweenExtraSpeed = 0     -- Tốc độ cộng thêm
 
 KickFarmSettingGroup:AddLabel("Kick Ratio (0.1 - 1.0)")
 
@@ -104,20 +104,20 @@ end)
 
 KickFarmSettingGroup:AddDivider()
 
--- ==================== DELAY TRƯỚC KHI BAY / TWEEN ====================
-KickFarmSettingGroup:AddLabel("Delay Before Fly/Tween (0 - 120 seconds)")
+-- ==================== DELAY SAU KHI TP VÀ TRƯỚC KHI ĐI BỘ ====================
+KickFarmSettingGroup:AddLabel("Delay After TP (before moving)")
 
-local PreFlySlider = KickFarmSettingGroup:AddSlider("PreFlySlider", {
-    Text = "Delay Before Fly",
+local DelayAfterTPSlider = KickFarmSettingGroup:AddSlider("DelayAfterTPSlider", {
+    Text = "Delay After TP",
     Default = 0,
     Min = 0,
     Max = 120,
     Rounding = 0,
     Increment = 5,
-    Callback = function(v) PreFlyDelay = v end,
+    Callback = function(v) DelayAfterTP = v end,
 })
 
-local PreFlyInput = KickFarmSettingGroup:AddInput("PreFlyInput", {
+local DelayAfterTPInput = KickFarmSettingGroup:AddInput("DelayAfterTPInput", {
     Default = "0",
     Numeric = true,
     Finished = true,
@@ -125,25 +125,25 @@ local PreFlyInput = KickFarmSettingGroup:AddInput("PreFlyInput", {
     Callback = function(text)
         local num = tonumber(text)
         if num and num >= 0 and num <= 120 then
-            PreFlyDelay = num
-            PreFlySlider:SetValue(num)
+            DelayAfterTP = num
+            DelayAfterTPSlider:SetValue(num)
         else
-            PreFlyDelay = 0
-            PreFlySlider:SetValue(0)
-            PreFlyInput:SetValue("0")
+            DelayAfterTP = 0
+            DelayAfterTPSlider:SetValue(0)
+            DelayAfterTPInput:SetValue("0")
         end
     end,
 })
 
-Options.PreFlySlider:OnChanged(function()
-    local val = Options.PreFlySlider.Value
-    PreFlyInput:SetValue(tostring(val))
+Options.DelayAfterTPSlider:OnChanged(function()
+    local val = Options.DelayAfterTPSlider.Value
+    DelayAfterTPInput:SetValue(tostring(val))
 end)
 
 KickFarmSettingGroup:AddDivider()
 
 -- ==================== EXTRA TWEEN SPEED ====================
-KickFarmSettingGroup:AddLabel("Extra Tween Speed (0 - 200 studs/s)")
+KickFarmSettingGroup:AddLabel("Extra Tween Speed (0 - 200)")
 
 local ExtraSpeedSlider = KickFarmSettingGroup:AddSlider("ExtraSpeedSlider", {
     Text = "Extra Tween Speed",
@@ -244,17 +244,20 @@ function StartKickFarm()
         conn:Disconnect()
         if not isKickFarming then break end
 
-        wait(4)   -- Đợi 4 giây sau wave
-
-        -- ==================== DELAY TRƯỚC KHI BAY ====================
-        if PreFlyDelay > 0 then
-            wait(PreFlyDelay)
-        end
+        wait(4)
 
         local target = Vector3.new(699.77, 3.00, 231.99)
 
+        -- TP đến điểm trung gian
+        root.CFrame = CFrame.new(674.96, -7.00, 232.41)
+
+        -- ==================== DELAY SAU KHI TP VÀ TRƯỚC KHI ĐI BỘ ====================
+        if DelayAfterTP > 0 then
+            wait(DelayAfterTP)
+        end
+
         if FarmMode == "Normal Farm" then
-            -- Normal Farm: Tween theo tốc độ gốc + extra
+            -- Normal Farm: Tween bay về đích
             local baseSpeed = humanoid.WalkSpeed
             local finalSpeed = baseSpeed + TweenExtraSpeed
             if finalSpeed < 20 then finalSpeed = 120 end
@@ -269,8 +272,7 @@ function StartKickFarm()
             tween.Completed:Wait()
 
         else
-            -- Tp Farm (giữ nguyên)
-            root.CFrame = CFrame.new(674.96, -7.00, 232.41)
+            -- Tp Farm
             wait(MoveDelay)
             root.CFrame = CFrame.new(target)
         end
