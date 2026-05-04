@@ -285,7 +285,6 @@ local KickPowerFarmGroup = Tabs.Farm:AddRightGroupbox("Kick Power Farm")
 
 local isWeightFarming = false
 local isAutoX2 = false
-local x2Time = 30
 local BonusTrainMode = "Ngay lập tức"
 
 KickPowerFarmGroup:AddToggle("AutoWeightFarmToggle", {
@@ -293,7 +292,6 @@ KickPowerFarmGroup:AddToggle("AutoWeightFarmToggle", {
     Default = false,
     Callback = function(state)
         isWeightFarming = state
-        -- Không unequip khi tắt nữa
     end,
 })
 
@@ -315,11 +313,8 @@ KickPowerFarmGroup:AddDropdown("BonusTrainModeDropdown", {
     end,
 })
 
-KickPowerFarmGroup:AddLabel("Note: Auto Bonus Train only works when Enable Farm is enabled", true)
-
 -- ==================== KICK POWER FARM LOGIC ====================
 task.spawn(function()
-    local lastX2Time = 0
     local weightList = {
         "Wooden Stick", "Bone Barbell", "Stone Block", "Copper Plate",
         "Iron Plate", "Ice Barbell", "Donut Barbell", "Golden Barhell",
@@ -340,7 +335,7 @@ task.spawn(function()
         local backpack = player.Backpack
 
         if not isWeightFarming then
-            continue   -- Chỉ dừng, không unequip
+            continue
         end
 
         -- ==================== AUTO BONUS TRAIN ====================
@@ -349,16 +344,14 @@ task.spawn(function()
                 -- Click ngay lập tức khi nút Bonus xuất hiện
                 local kickGui = player.PlayerGui:FindFirstChild("KickUpgrades")
                 if kickGui then
-                    local bonusFolder = kickGui:FindFirstChild("Bonus")
                     local targetButton = nil
+                    local bonusFolder = kickGui:FindFirstChild("Bonus")
 
                     if bonusFolder then
                         for _, child in ipairs(bonusFolder:GetDescendants()) do
-                            if child:IsA("TextButton") or child:IsA("ImageButton") then
-                                if child.Visible then
-                                    targetButton = child
-                                    break
-                                end
+                            if (child:IsA("TextButton") or child:IsA("ImageButton")) and child.Visible then
+                                targetButton = child
+                                break
                             end
                         end
                     end
@@ -377,17 +370,14 @@ task.spawn(function()
                     end
                 end
             else
-                -- Tích Luỹ (đã fix lại cách cũ)
-                if tick() - lastX2Time >= x2Time then
-                    game:GetService("ReplicatedStorage"):WaitForChild("Shared")
-                        :WaitForChild("Packages"):WaitForChild("Network")
-                        :WaitForChild("rev_TaviMishkal"):FireServer()
-                    lastX2Time = tick()
-                end
+                -- Tích Luỹ: Gửi remote LIÊN TỤC
+                game:GetService("ReplicatedStorage"):WaitForChild("Shared")
+                    :WaitForChild("Packages"):WaitForChild("Network")
+                    :WaitForChild("rev_TaviMishkal"):FireServer()
             end
         end
 
-        -- Auto Equip tất cả weight
+        -- Auto Equip tất cả weight items
         for _, itemName in ipairs(weightList) do
             local item = backpack:FindFirstChild(itemName)
             if item then
