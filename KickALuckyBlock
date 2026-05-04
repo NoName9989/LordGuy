@@ -317,7 +317,7 @@ KickPowerFarmGroup:AddDropdown("BonusTrainModeDropdown", {
 task.spawn(function()
     local weightList = {
         "Wooden Stick", "Bone Barbell", "Stone Block", "Copper Plate",
-        "Iron Plate", "Ice Barbell", "Donut Barbell", "Golden Barhell",
+        "Iron Plate", "Ice Barbell", "Donut Barbell", "Golden Barbell",
         "Heaven Plate", "Mega Golden Barbell", "Neon Pulse", "Giant Gold Star Barbell"
     }
 
@@ -334,14 +334,10 @@ task.spawn(function()
         local humanoid = character.Humanoid
         local backpack = player.Backpack
 
-        if not isWeightFarming then
-            continue
-        end
-
-        -- ==================== AUTO BONUS TRAIN ====================
+        -- ==================== AUTO BONUS TRAIN (KHÔNG PHỤ THUỘC VÀO FARM) ====================
         if isAutoX2 then
             if BonusTrainMode == "Ngay lập tức" then
-                -- Click ngay lập tức khi nút Bonus xuất hiện
+                -- Click ngay khi nút xuất hiện
                 local kickGui = player.PlayerGui:FindFirstChild("KickUpgrades")
                 if kickGui then
                     local targetButton = nil
@@ -370,19 +366,21 @@ task.spawn(function()
                     end
                 end
             else
-                -- Tích Luỹ: Gửi remote LIÊN TỤC
+                -- Tích Luỹ (gửi remote liên tục)
                 game:GetService("ReplicatedStorage"):WaitForChild("Shared")
                     :WaitForChild("Packages"):WaitForChild("Network")
                     :WaitForChild("rev_TaviMishkal"):FireServer()
             end
         end
 
-        -- Auto Equip tất cả weight items
-        for _, itemName in ipairs(weightList) do
-            local item = backpack:FindFirstChild(itemName)
-            if item then
-                humanoid:EquipTool(item)
-                wait(0.1)
+        -- ==================== AUTO EQUIP WEIGHT (VẪN PHỤ THUỘC VÀO ENABLE FARM) ====================
+        if isWeightFarming then
+            for _, itemName in ipairs(weightList) do
+                local item = backpack:FindFirstChild(itemName)
+                if item then
+                    humanoid:EquipTool(item)
+                    wait(0.1)
+                end
             end
         end
     end
