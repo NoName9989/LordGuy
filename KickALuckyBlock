@@ -8,7 +8,7 @@ local Options = Library.Options
 
 local Window = Library:CreateWindow({
     Title = "LordCat",
-    Footer = "Version 1.0",
+    Footer = "Version 1.1",
     Icon = 73071239069153,
     NotifySide = "Right",
     ShowCustomCursor = true,
@@ -23,7 +23,7 @@ local Tabs = {
     ["UI Settings"] = Window:AddTab("UI Settings", "settings"),
 }
 
--- ==================== KICK FARM SETTING ====================
+-- ==================== KICK FARM SETTING (BÊN TRÁI) ====================
 local KickFarmSettingGroup = Tabs.Farm:AddLeftGroupbox("Kick Farm Setting")
 
 local KickRatio = 1
@@ -31,10 +31,6 @@ local FarmDelay = 1
 local MoveDelay = 5
 local DelayAfterTP = 0
 local TweenExtraSpeed = 0
-
--- ==================== FIND MUTATION ====================
-local SelectedMutations = {}
-local EnableFindMutation = false
 
 KickFarmSettingGroup:AddLabel("Kick Ratio (0.1 - 1.0)")
 
@@ -105,30 +101,6 @@ Options.DelaySlider:OnChanged(function()
     local val = Options.DelaySlider.Value
     DelayInput:SetValue(val == 1 and "1" or string.format("%.1f", val))
 end)
-
-KickFarmSettingGroup:AddDivider()
-
-KickFarmSettingGroup:AddLabel("Find Mutation (Multi)")
-
-local mutationList = {"Gold", "Diamond", "Plasma", "Molten", "Radioactive", "Shadow", "Electrified", "Rainbow"}
-
-KickFarmSettingGroup:AddDropdown("MutationDropdown", {
-    Text = "Find Mutation",
-    Values = mutationList,
-    Default = {},
-    Multi = true,
-    Callback = function(Value)
-        SelectedMutations = Value
-    end,
-})
-
-KickFarmSettingGroup:AddToggle("EnableFindMutationToggle", {
-    Text = "Enable Find Mutation",
-    Default = false,
-    Callback = function(state)
-        EnableFindMutation = state
-    end,
-})
 
 KickFarmSettingGroup:AddDivider()
 
@@ -237,6 +209,30 @@ KickFarmGroup:AddToggle("AutoKickFarmToggle", {
     end,
 })
 
+-- ==================== FIND MUTATION GROUP (BÊN PHẢI) ====================
+local MutationGroup = Tabs.Farm:AddRightGroupbox("Find Mutation")
+
+local SelectedMutations = {}
+local EnableFindMutation = false
+
+MutationGroup:AddDropdown("MutationDropdown", {
+    Text = "Find Mutation (Multi)",
+    Values = {"Gold", "Diamond", "Plasma", "Molten", "Radioactive", "Shadow", "Electrified", "Rainbow"},
+    Default = {},
+    Multi = true,
+    Callback = function(Value)
+        SelectedMutations = Value
+    end,
+})
+
+MutationGroup:AddToggle("EnableFindMutationToggle", {
+    Text = "Enable Find Mutation",
+    Default = false,
+    Callback = function(state)
+        EnableFindMutation = state
+    end,
+})
+
 -- ==================== KICK FARM LOGIC ====================
 function StartKickFarm()
     local TweenService = game:GetService("TweenService")
@@ -270,31 +266,28 @@ function StartKickFarm()
         conn:Disconnect()
         if not isKickFarming then break end
 
-                        wait(4)
+        wait(4)
 
-        -- ==================== FIND MUTATION LOGIC (ĐÃ SỬA) ====================
-        local shouldContinueFarm = true   -- Mặc định là farm bình thường
+        -- ==================== FIND MUTATION LOGIC ====================
+        local shouldContinueFarm = true
 
         if EnableFindMutation and #SelectedMutations > 0 then
-            local hasDesiredMutation = false
+            shouldContinueFarm = false
             local debris = workspace:FindFirstChild("Debris")
-
             if debris then
                 for _, model in ipairs(debris:GetChildren()) do
                     if model:IsA("Model") then
                         for _, mutName in ipairs(SelectedMutations) do
                             if model:FindFirstChild(mutName) or model:FindFirstChild(mutName, true) then
-                                hasDesiredMutation = true
-                                print("✅ TÌM THẤY:", mutName, "trong", model.Name)
+                                shouldContinueFarm = true
+                                print("✅ TÌM THẤY MUTATION:", mutName, "trong", model.Name)
                                 break
                             end
                         end
-                        if hasDesiredMutation then break end
+                        if shouldContinueFarm then break end
                     end
                 end
             end
-
-            shouldContinueFarm = hasDesiredMutation   -- Chỉ farm khi có mutation
         end
 
         local target = Vector3.new(699.77, 3.00, 231.99)
@@ -303,7 +296,6 @@ function StartKickFarm()
             if DelayAfterTP > 0 then wait(DelayAfterTP) end
 
             if shouldContinueFarm then
-                -- Farm bình thường (có mutation hoặc không bật Find Mutation)
                 local baseSpeed = humanoid.WalkSpeed
                 local finalSpeed = baseSpeed + TweenExtraSpeed
                 if finalSpeed < 20 then finalSpeed = 120 end
@@ -316,11 +308,9 @@ function StartKickFarm()
                 tween:Play()
                 tween.Completed:Wait()
             else
-                -- Không có mutation → TP thoát
                 root.CFrame = CFrame.new(713.38, 3.00, 233.94)
             end
         else
-            -- Tp Farm
             root.CFrame = CFrame.new(674.96, -7.00, 232.41)
             if DelayAfterTP > 0 then wait(DelayAfterTP) end
             root.CFrame = CFrame.new(target)
