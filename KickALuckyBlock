@@ -33,7 +33,7 @@ local DelayAfterTP = 0
 local TweenExtraSpeed = 0
 
 -- ==================== FIND MUTATION ====================
-local SelectedMutations = {}        -- Multi select
+local SelectedMutations = {}
 local EnableFindMutation = false
 
 KickFarmSettingGroup:AddLabel("Kick Ratio (0.1 - 1.0)")
@@ -133,6 +133,7 @@ KickFarmSettingGroup:AddToggle("EnableFindMutationToggle", {
 
 KickFarmSettingGroup:AddDivider()
 
+-- ==================== DELAY AFTER TP ====================
 KickFarmSettingGroup:AddLabel("Delay After TP (before moving)")
 
 local DelayAfterTPSlider = KickFarmSettingGroup:AddSlider("DelayAfterTPSlider", {
@@ -166,6 +167,44 @@ local DelayAfterTPInput = KickFarmSettingGroup:AddInput("DelayAfterTPInput", {
 Options.DelayAfterTPSlider:OnChanged(function()
     local val = Options.DelayAfterTPSlider.Value
     DelayAfterTPInput:SetValue(tostring(val))
+end)
+
+KickFarmSettingGroup:AddDivider()
+
+-- ==================== EXTRA TWEEN SPEED ====================
+KickFarmSettingGroup:AddLabel("Extra Tween Speed (0 - 200)")
+
+local ExtraSpeedSlider = KickFarmSettingGroup:AddSlider("ExtraSpeedSlider", {
+    Text = "Extra Tween Speed",
+    Default = 0,
+    Min = 0,
+    Max = 200,
+    Rounding = 0,
+    Increment = 5,
+    Callback = function(v) TweenExtraSpeed = v end,
+})
+
+local ExtraSpeedInput = KickFarmSettingGroup:AddInput("ExtraSpeedInput", {
+    Default = "0",
+    Numeric = true,
+    Finished = true,
+    Placeholder = "0 - 200",
+    Callback = function(text)
+        local num = tonumber(text)
+        if num and num >= 0 and num <= 200 then
+            TweenExtraSpeed = num
+            ExtraSpeedSlider:SetValue(num)
+        else
+            TweenExtraSpeed = 0
+            ExtraSpeedSlider:SetValue(0)
+            ExtraSpeedInput:SetValue("0")
+        end
+    end,
+})
+
+Options.ExtraSpeedSlider:OnChanged(function()
+    local val = Options.ExtraSpeedSlider.Value
+    ExtraSpeedInput:SetValue(tostring(val))
 end)
 
 -- ==================== KICK FARM ====================
@@ -236,20 +275,23 @@ function StartKickFarm()
 
         wait(4)
 
-        -- ==================== FIND MUTATION LOGIC ====================
+        -- ==================== FIND MUTATION ====================
         local hasDesiredMutation = false
 
         if EnableFindMutation and #SelectedMutations > 0 then
-            for _, obj in ipairs(workspace:GetDescendants()) do
-                if obj:IsA("Model") and obj ~= character then
-                    local modelName = obj.Name:lower()
-                    for _, mut in ipairs(SelectedMutations) do
-                        if modelName:find(mut:lower()) then
-                            hasDesiredMutation = true
-                            break
+            local debris = workspace:FindFirstChild("Debris")
+            if debris then
+                for _, model in ipairs(debris:GetChildren()) do
+                    if model:IsA("Model") then
+                        for _, mutName in ipairs(SelectedMutations) do
+                            if model:FindFirstChild(mutName) then
+                                hasDesiredMutation = true
+                                print("✅ TÌM THẤY MUTATION:", mutName, "trong", model.Name)
+                                break
+                            end
                         end
+                        if hasDesiredMutation then break end
                     end
-                    if hasDesiredMutation then break end
                 end
             end
         end
@@ -260,7 +302,7 @@ function StartKickFarm()
             if DelayAfterTP > 0 then wait(DelayAfterTP) end
 
             if hasDesiredMutation then
-                -- Có mutation mong muốn → tiếp tục farm bình thường (tween)
+                -- Có mutation → farm bình thường (tween + extra speed)
                 local baseSpeed = humanoid.WalkSpeed
                 local finalSpeed = baseSpeed + TweenExtraSpeed
                 if finalSpeed < 20 then finalSpeed = 120 end
@@ -273,7 +315,7 @@ function StartKickFarm()
                 tween:Play()
                 tween.Completed:Wait()
             else
-                -- Không có mutation → TP đến vị trí thoát
+                -- Không có mutation → TP thoát
                 root.CFrame = CFrame.new(713.38, 3.00, 233.94)
             end
         else
