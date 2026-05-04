@@ -286,16 +286,14 @@ local KickPowerFarmGroup = Tabs.Farm:AddRightGroupbox("Kick Power Farm")
 local isWeightFarming = false
 local isAutoX2 = false
 local x2Time = 30
-local BonusTrainMode = "Ngay lập tức"   -- "Ngay lập tức" hoặc "Tích Luỹ"
+local BonusTrainMode = "Ngay lập tức"
 
 KickPowerFarmGroup:AddToggle("AutoWeightFarmToggle", {
     Text = "Enable Farm",
     Default = false,
     Callback = function(state)
         isWeightFarming = state
-        if not state then
-            UnequipWeightOnce()
-        end
+        -- Không unequip khi tắt nữa
     end,
 })
 
@@ -320,14 +318,6 @@ KickPowerFarmGroup:AddDropdown("BonusTrainModeDropdown", {
 KickPowerFarmGroup:AddLabel("Note: Auto Bonus Train only works when Enable Farm is enabled", true)
 
 -- ==================== KICK POWER FARM LOGIC ====================
-function UnequipWeightOnce()
-    local player = game.Players.LocalPlayer
-    local character = player.Character
-    if character and character:FindFirstChild("Humanoid") then
-        character.Humanoid:UnequipTools()
-    end
-end
-
 task.spawn(function()
     local lastX2Time = 0
     local weightList = {
@@ -349,34 +339,30 @@ task.spawn(function()
         local humanoid = character.Humanoid
         local backpack = player.Backpack
 
-        -- Khi tắt Enable Farm → dừng hoàn toàn
         if not isWeightFarming then
-            if character:FindFirstChildWhichIsA("Tool") then
-                humanoid:UnequipTools()
-            end
-            continue
+            continue   -- Chỉ dừng, không unequip
         end
 
         -- ==================== AUTO BONUS TRAIN ====================
         if isAutoX2 then
             if BonusTrainMode == "Ngay lập tức" then
-                -- Click ngay khi nút Bonus xuất hiện (theo cấu trúc GUI trong ảnh)
+                -- Click ngay lập tức khi nút Bonus xuất hiện
                 local kickGui = player.PlayerGui:FindFirstChild("KickUpgrades")
                 if kickGui then
-                    -- Tìm trong folder Bonus hoặc tất cả descendants
                     local bonusFolder = kickGui:FindFirstChild("Bonus")
                     local targetButton = nil
 
                     if bonusFolder then
                         for _, child in ipairs(bonusFolder:GetDescendants()) do
-                            if (child:IsA("TextButton") or child:IsA("ImageButton")) and child.Visible then
-                                targetButton = child
-                                break
+                            if child:IsA("TextButton") or child:IsA("ImageButton") then
+                                if child.Visible then
+                                    targetButton = child
+                                    break
+                                end
                             end
                         end
                     end
 
-                    -- Nếu không tìm thấy trong Bonus thì tìm trực tiếp trong KickUpgrades
                     if not targetButton then
                         for _, child in ipairs(kickGui:GetDescendants()) do
                             if (child:IsA("TextButton") or child:IsA("ImageButton")) and child.Visible then
@@ -391,7 +377,7 @@ task.spawn(function()
                     end
                 end
             else
-                -- Tích Luỹ (cách cũ)
+                -- Tích Luỹ (đã fix lại cách cũ)
                 if tick() - lastX2Time >= x2Time then
                     game:GetService("ReplicatedStorage"):WaitForChild("Shared")
                         :WaitForChild("Packages"):WaitForChild("Network")
@@ -401,7 +387,7 @@ task.spawn(function()
             end
         end
 
-        -- ==================== AUTO EQUIP TẤT CẢ WEIGHT ITEMS ====================
+        -- Auto Equip tất cả weight
         for _, itemName in ipairs(weightList) do
             local item = backpack:FindFirstChild(itemName)
             if item then
