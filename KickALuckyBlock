@@ -270,21 +270,22 @@ function StartKickFarm()
         conn:Disconnect()
         if not isKickFarming then break end
 
-        wait(4)
+                        wait(4)
 
-        -- ==================== FIND MUTATION LOGIC ====================
-        local shouldFarmNormal = true
+        -- ==================== FIND MUTATION LOGIC (ĐÃ SỬA) ====================
+        local shouldContinueFarm = true   -- Mặc định là farm bình thường
 
         if EnableFindMutation and #SelectedMutations > 0 then
             local hasDesiredMutation = false
             local debris = workspace:FindFirstChild("Debris")
+
             if debris then
                 for _, model in ipairs(debris:GetChildren()) do
                     if model:IsA("Model") then
                         for _, mutName in ipairs(SelectedMutations) do
                             if model:FindFirstChild(mutName) or model:FindFirstChild(mutName, true) then
                                 hasDesiredMutation = true
-                                print("✅ TÌM THẤY MUTATION:", mutName, "trong", model.Name)
+                                print("✅ TÌM THẤY:", mutName, "trong", model.Name)
                                 break
                             end
                         end
@@ -292,7 +293,8 @@ function StartKickFarm()
                     end
                 end
             end
-            shouldFarmNormal = hasDesiredMutation
+
+            shouldContinueFarm = hasDesiredMutation   -- Chỉ farm khi có mutation
         end
 
         local target = Vector3.new(699.77, 3.00, 231.99)
@@ -300,8 +302,8 @@ function StartKickFarm()
         if FarmMode == "Normal Farm" then
             if DelayAfterTP > 0 then wait(DelayAfterTP) end
 
-            if shouldFarmNormal then
-                -- Farm bình thường
+            if shouldContinueFarm then
+                -- Farm bình thường (có mutation hoặc không bật Find Mutation)
                 local baseSpeed = humanoid.WalkSpeed
                 local finalSpeed = baseSpeed + TweenExtraSpeed
                 if finalSpeed < 20 then finalSpeed = 120 end
