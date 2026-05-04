@@ -29,8 +29,8 @@ local KickFarmSettingGroup = Tabs.Farm:AddLeftGroupbox("Kick Farm Setting")
 local KickRatio = 1
 local FarmDelay = 1
 local MoveDelay = 5
-local DelayAfterTP = 0        -- Delay sau khi TP và trước khi tween/bay
-local TweenExtraSpeed = 0     -- Tốc độ cộng thêm
+local DelayAfterTP = 0        -- Chỉ dùng cho Tp Farm (sau khi TP trung gian)
+local TweenExtraSpeed = 0     -- Chỉ dùng cho Normal Farm
 
 KickFarmSettingGroup:AddLabel("Kick Ratio (0.1 - 1.0)")
 
@@ -104,7 +104,7 @@ end)
 
 KickFarmSettingGroup:AddDivider()
 
--- ==================== DELAY SAU KHI TP VÀ TRƯỚC KHI ĐI BỘ ====================
+-- ==================== DELAY SAU TP (CHỈ DÙNG CHO TP FARM) ====================
 KickFarmSettingGroup:AddLabel("Delay After TP (before moving)")
 
 local DelayAfterTPSlider = KickFarmSettingGroup:AddSlider("DelayAfterTPSlider", {
@@ -142,7 +142,7 @@ end)
 
 KickFarmSettingGroup:AddDivider()
 
--- ==================== EXTRA TWEEN SPEED ====================
+-- ==================== EXTRA TWEEN SPEED (CHỈ NORMAL FARM) ====================
 KickFarmSettingGroup:AddLabel("Extra Tween Speed (0 - 200)")
 
 local ExtraSpeedSlider = KickFarmSettingGroup:AddSlider("ExtraSpeedSlider", {
@@ -248,16 +248,8 @@ function StartKickFarm()
 
         local target = Vector3.new(699.77, 3.00, 231.99)
 
-        -- TP đến điểm trung gian
-        root.CFrame = CFrame.new(674.96, -7.00, 232.41)
-
-        -- ==================== DELAY SAU KHI TP VÀ TRƯỚC KHI ĐI BỘ ====================
-        if DelayAfterTP > 0 then
-            wait(DelayAfterTP)
-        end
-
         if FarmMode == "Normal Farm" then
-            -- Normal Farm: Tween bay về đích
+            -- ==================== NORMAL FARM ====================
             local baseSpeed = humanoid.WalkSpeed
             local finalSpeed = baseSpeed + TweenExtraSpeed
             if finalSpeed < 20 then finalSpeed = 120 end
@@ -272,8 +264,14 @@ function StartKickFarm()
             tween.Completed:Wait()
 
         else
-            -- Tp Farm
-            wait(MoveDelay)
+            -- ==================== TP FARM ====================
+            root.CFrame = CFrame.new(674.96, -7.00, 232.41)
+            
+            -- Delay sau khi TP và trước khi TP cuối (chỉ Tp Farm)
+            if DelayAfterTP > 0 then
+                wait(DelayAfterTP)
+            end
+            
             root.CFrame = CFrame.new(target)
         end
 
