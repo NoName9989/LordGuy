@@ -127,9 +127,9 @@ local ExtraSpeedSlider = KickFarmSettingGroup:AddSlider("ExtraSpeedSlider", {
 
 local ExtraSpeedInput = KickFarmSettingGroup:AddInput("ExtraSpeedInput", {
     Default = "0",
-    Numeric = false, -- 🔥 cho phép xử lý tay (an toàn hơn)
-    Finished = false, -- 🔥 không cần nhấn Enter
-    Placeholder = "0 - 200",
+    Numeric = false, 
+    Finished = false, 
+    Placeholder = "-60 - 200",
 
     Callback = function(text)
         if isUpdating then return end
@@ -137,7 +137,7 @@ local ExtraSpeedInput = KickFarmSettingGroup:AddInput("ExtraSpeedInput", {
         -- 🔥 lọc số
         local num = tonumber(text:match("%d+"))
 
-        if num and num >= 0 and num <= 200 then
+        if num and num >= -60 and num <= 200 then
             TweenExtraSpeed = num
 
             isUpdating = true
