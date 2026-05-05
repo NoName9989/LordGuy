@@ -155,6 +155,7 @@ MutationFarmGroup:AddDropdown("MutationDropdown", {
     Values = {"Golden", "Diamond", "Plasma", "Molten", "Radioactive", "Shadow", "Electrified", "Rainbow", "Void", "Virus"},
     Default = {},
     Multi = true,
+    Search = true,
     Callback = function(Value)
         SelectedMutations = Value
     end,
@@ -342,6 +343,7 @@ KickPowerFarmGroup:AddDropdown("BonusTrainModeDropdown", {
     Values = {"straightway", "accumulate"},
     Default = 1,
     Multi = false,
+    Search = true,
     Callback = function(Value)
         BonusTrainMode = Value
     end,
@@ -533,6 +535,7 @@ local CollectDropdown = CollectGroup:AddDropdown("CollectDropdown", {
     Values = CollectValues,
     Default = {},
     Multi = true,
+    Search = true,
     Callback = function() end   
 })
 
@@ -608,7 +611,7 @@ RebirthGroup:AddToggle("AutoRebirthToggle", {
 -- ==================== AUTO REBIRTH LOGIC ====================
 task.spawn(function()
     while true do
-        wait(1.5)   -- delay an toàn (có thể chỉnh thành 1 hoặc 2 nếu cần)
+        wait(1.5)   
         
         if isAutoRebirth then
             game:GetService("ReplicatedStorage"):WaitForChild("Shared")
@@ -662,6 +665,7 @@ WeightsShopGroup:AddDropdown("WeightShopDropdown", {
     },
     Default = 1,
     Multi = false,
+    Search = true,
     Callback = function(Value)
         SelectedWeightShopItem = Value
     end,
