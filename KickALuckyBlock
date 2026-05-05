@@ -890,6 +890,52 @@ function StartAutoTrade()
     end)
 end
 
+
+-- ==================== AUTO ACCEPT / CANCEL TRADE (2 NÚT RIÊNG) ====================
+
+-- Auto Accept Trade
+local isAutoAccept = false
+
+TradeGroup:AddToggle("AutoAcceptToggle", {
+    Text = "Auto Accept Trade",
+    Default = false,
+    Callback = function(state)
+        isAutoAccept = state
+    end,
+})
+
+-- Auto Cancel Trade
+local isAutoCancel = false
+
+TradeGroup:AddToggle("AutoCancelToggle", {
+    Text = "Auto Cancel Trade",
+    Default = false,
+    Callback = function(state)
+        isAutoCancel = state
+    end,
+})
+
+-- Logic Loop
+task.spawn(function()
+    while true do
+        wait(0.5)
+        
+        if isAutoAccept then
+            local args = { true }
+            game:GetService("ReplicatedStorage"):WaitForChild("Shared")
+                :WaitForChild("Packages"):WaitForChild("Network")
+                :WaitForChild("rev_SendGift"):FireServer(unpack(args))
+        end
+        
+        if isAutoCancel then
+            local args = { false }
+            game:GetService("ReplicatedStorage"):WaitForChild("Shared")
+                :WaitForChild("Packages"):WaitForChild("Network")
+                :WaitForChild("rev_SendGift"):FireServer(unpack(args))
+        end
+    end
+end)
+
 -- ==================== TAB SHOP - GROUP 1: WEIGHTS SHOP ====================
 local ShopTab = Tabs.Shop
 
