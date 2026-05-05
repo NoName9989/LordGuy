@@ -660,20 +660,52 @@ local SelectedMutation = nil
 local SelectedPlayerID = nil
 local isAutoTrading = false
 
--- ==================== FIX QUAN TRỌNG ====================
+-- ==================== CHECK TOOL (backup) ====================
 local function HasTool(player, toolName)
     local backpack = player.Backpack
     local character = player.Character
 
-    if backpack:FindFirstChild(toolName) then
-        return true
-    end
-
-    if character and character:FindFirstChild(toolName) then
-        return true
-    end
+    if backpack:FindFirstChild(toolName) then return true end
+    if character and character:FindFirstChild(toolName) then return true end
 
     return false
+end
+
+-- ==================== SCAN MESSAGE ====================
+local function GetMessageLabel()
+    local gui = Players.LocalPlayer:FindFirstChild("PlayerGui")
+    if not gui then return nil end
+
+    local messages = gui:FindFirstChild("Messages")
+    if not messages then return nil end
+
+    local frame = messages:FindFirstChild("MessagesFrame")
+    if not frame then return nil end
+
+    local system = frame:FindFirstChild("System")
+    if not system then return nil end
+
+    local label = system:FindFirstChild("MessageLabel")
+    if label and label:IsA("TextLabel") then
+        return label
+    end
+
+    return nil
+end
+
+local function IsTradeSuccess()
+    local label = GetMessageLabel()
+    if not label then return false end
+
+    local text = string.lower(label.Text or "")
+    return string.find(text, "accepted your gift") ~= nil
+end
+
+local function ClearMessage()
+    local label = GetMessageLabel()
+    if label then
+        label.Text = ""
+    end
 end
 
 -- ==================== PLAYER LIST ====================
@@ -695,7 +727,6 @@ TradeGroup:AddDropdown("BrainrotDropdown", {
     Text = "Select Brainrot (Multi)",
     Values = {
         "Cappuccino Clownino","Rhino Toasterino","Bombardiro Crocodilo","Bombini Gusini"
-        -- (bạn có thể thêm full list vào đây)
     },
     Default = {},
     Multi = true,
@@ -771,7 +802,7 @@ function StartAutoTrade()
             local humanoid = player.Character and player.Character:FindFirstChild("Humanoid")
             if not humanoid then continue end
 
-            -- nếu không chọn brainrot → lấy tất cả
+            -- nếu không chọn → lấy tất cả
             local list = SelectedBrainrots
             if next(list) == nil then
                 list = {}
@@ -796,21 +827,27 @@ function StartAutoTrade()
 
                 if not hasMutation then continue end
 
-                -- 🔥 EQUIP
+                -- equip
                 humanoid:UnequipTools()
                 task.wait(0.1)
                 humanoid:EquipTool(tool)
 
-                -- 🔥 LOOP GỬI TRADE CHO ITEM NÀY
+                -- 🔥 LOOP TRADE
                 while isAutoTrading do
                     task.wait(0.3)
 
-                    -- 🔥 FIX CHÍNH Ở ĐÂY
+                    -- ✅ detect thành công bằng UI
+                    if IsTradeSuccess() then
+                        ClearMessage()
+                        break
+                    end
+
+                    -- backup: nếu item mất thật
                     if not HasTool(player, brainrotName) then
                         break
                     end
 
-                    -- spam trade liên tục
+                    -- spam trade
                     ReplicatedStorage:WaitForChild("Shared")
                         :WaitForChild("Packages")
                         :WaitForChild("Network")
