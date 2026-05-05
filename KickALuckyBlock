@@ -650,41 +650,57 @@ end)
 
 -- ==================== TAB TRADE + FAVORITE ====================
 local TradeTab = Tabs.Trade
-
 local TradeGroup = TradeTab:AddLeftGroupbox("Trade")
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local SelectedBrainrots = {}
 local SelectedMutation = nil
+local SelectedPlayerName = nil
 local SelectedPlayerID = nil
+local isAutoTrading = false
 
--- Brainrot Dropdown (Multi)
+-- ==================== PLAYER LIST ====================
+local function GetPlayerNames()
+    local t = {}
+    for _, p in pairs(Players:GetPlayers()) do
+        table.insert(t, p.Name)
+    end
+    return t
+end
+
+-- ==================== BRAINROT ====================
 TradeGroup:AddDropdown("BrainrotDropdown", {
     Text = "Select Brainrot (Multi)",
     Values = {
-        "Noobini Pizzanini", "Lirili Larila", "Tim Cheese", "Talpa Di Fero", "Svinina Bombardino",
-        "Pipi Kiwi", "Trippi Troppi", "Fruli Frula", "Gangster Footera", "Bobrito Bandito",
-        "Boneca Ambalabu", "Ta Ta Ta Ta Sahur", "Ballerina Cappuccina", "Cappuccino Assassino",
-        "Brr Brr Patapim", "Cacto Hipopotamo", "Garamararam", "Madung", "Waterdino", "Pesto Mortioni",
-        "Pannaburro", "Orcalero", "Mangolini Parrocini", "John Pork", "Gattatino Nyanino",
-        "Chimpanzini Bananini", "Plan Red", "Plan Blue", "Capi Taco", "Bambini Crostini",
-        "Trulimero Trulicina", "Elefantucci Bananucci", "Bananita Dolphinita", "Salamino Pinguino",
-        "Penguino Cocosino", "67", "Burbaloni Luliloli", "Chef Crabracadabra", "Capybara Eggplant",
-        "Bangello", "Elefanto Frigo", "Rinooccio Verdini", "Glorbo Fruttodrillo", "Udin Din Din Dun",
-        "Pandaccini Bananini", "Octopusini Bluberini", "Strawberelli Flamingelli", "Sigma Boy",
-        "Frigo Camelo", "Orangutini Ananasini", "Rhino Toasterino", "Bombardiro Crocodilo",
-        "Bombini Gusini", "Castlino Fortini", "Tuff Toucan", "Fryuro", "Burguro", "Guest666",
-        "Zibra Zubra Zibralini", "Cavallo Virtuso", "Gorillo Watermelondrillo", "Cocofanto Elefanto",
-        "Bambu Sahur", "W or L", "Girafa Celeste", "Tralalero Tralala", "Tralalerita Tralala",
-        "Peant Jarro", "Dipperi Chiperini", "Rexosaurus", "1x1x1x1", "Matteo", "Alessio",
-        "Espresso Signora", "Tripi Tropi Tropa Tripa", "SWAG SODA", "Stoppo Luminino",
-        "Torrtuginni Dragonfrutini", "Tictac Sahur", "Cactus Pingu", "Los Primos Blue",
-        "La Vacca Saturno Saturnita", "Agarrini La Palini", "Bottellini", "Karkerkar Kurkur",
-        "Blackhole Goat", "Compactoroni Diskaloni", "Cappuccino Clownino", "Nuclearo Dinossauro",
-        "Los Nooo My Hotspotsitos", "Chillin Chilli", "Crazylone Pizaione", "Corn Sahur",
-        "Meowl", "Strawberry Elephant", "Dragonfrutina Dolphinita", "Guerriro Digitale",
-        "Chicleteira Bicicleteira", "Pot Hotspot", "Krupuk Pagi Pagi", "Beluga Beluga",
-        "Tralaledon", "Anpali Babel", "Ketchuru Matsuru", "Mastodontico Telepiedone",
-        "Ketupat Kepat"
+        "Noobini Pizzanini","Lirili Larila","Tim Cheese","Talpa Di Fero","Svinina Bombardino",
+        "Pipi Kiwi","Trippi Troppi","Fruli Frula","Gangster Footera","Bobrito Bandito",
+        "Boneca Ambalabu","Ta Ta Ta Ta Sahur","Ballerina Cappuccina","Cappuccino Assassino",
+        "Brr Brr Patapim","Cacto Hipopotamo","Garamararam","Madung","Waterdino",
+        "Pesto Mortioni","Pannaburro","Orcalero","Mangolini Parrocini","John Pork",
+        "Gattatino Nyanino","Chimpanzini Bananini","Plan Red","Plan Blue","Capi Taco",
+        "Bambini Crostini","Trulimero Trulicina","Elefantucci Bananucci",
+        "Bananita Dolphinita","Salamino Pinguino","Penguino Cocosino","67",
+        "Burbaloni Luliloli","Chef Crabracadabra","Capybara Eggplant","Bangello",
+        "Elefanto Frigo","Rinooccio Verdini","Glorbo Fruttodrillo","Udin Din Din Dun",
+        "Pandaccini Bananini","Octopusini Bluberini","Strawberelli Flamingelli",
+        "Sigma Boy","Frigo Camelo","Orangutini Ananasini","Rhino Toasterino",
+        "Bombardiro Crocodilo","Bombini Gusini","Castlino Fortini","Tuff Toucan",
+        "Fryuro","Burguro","Guest666","Zibra Zubra Zibralini","Cavallo Virtuso",
+        "Gorillo Watermelondrillo","Cocofanto Elefanto","Bambu Sahur","W or L",
+        "Girafa Celeste","Tralalero Tralala","Tralalerita Tralala","Peant Jarro",
+        "Dipperi Chiperini","Rexosaurus","1x1x1x1","Matteo","Alessio",
+        "Espresso Signora","Tripi Tropi Tropa Tripa","SWAG SODA","Stoppo Luminino",
+        "Torrtuginni Dragonfrutini","Tictac Sahur","Cactus Pingu","Los Primos Blue",
+        "La Vacca Saturno Saturnita","Agarrini La Palini","Bottellini",
+        "Karkerkar Kurkur","Blackhole Goat","Compactoroni Diskaloni",
+        "Cappuccino Clownino","Nuclearo Dinossauro","Los Nooo My Hotspotsitos",
+        "Chillin Chilli","Crazylone Pizaione","Corn Sahur","Meowl",
+        "Strawberry Elephant","Dragonfrutina Dolphinita","Guerriro Digitale",
+        "Chicleteira Bicicleteira","Pot Hotspot","Krupuk Pagi Pagi",
+        "Beluga Beluga","Tralaledon","Anpali Babel","Ketchuru Matsuru",
+        "Mastodontico Telepiedone","Ketupat Kepat"
     },
     Default = {},
     Multi = true,
@@ -693,31 +709,45 @@ TradeGroup:AddDropdown("BrainrotDropdown", {
     end,
 })
 
--- Mutation Dropdown (Single)
+-- ==================== MUTATION ====================
 TradeGroup:AddDropdown("MutationDropdown", {
     Text = "Select Mutation",
-    Values = {"Gold", "Diamond", "Plasma", "Molten", "Radioactive", "Shadow", "Electrified", "Rainbow"},
-    Default = 1,
+    Values = {"Golden","Diamond","Plasma","Molten","Radioactive","Shadow","Electrified","Rainbow"},
+    Default = nil,
     Multi = false,
     Callback = function(Value)
         SelectedMutation = Value
     end,
 })
 
--- Player Dropdown
-TradeGroup:AddDropdown("PlayerDropdown", {
+-- ==================== PLAYER ====================
+local PlayerDropdown = TradeGroup:AddDropdown("PlayerDropdown", {
     Text = "Select Player",
-    Values = {},
-    Default = 1,
+    Values = GetPlayerNames(),
+    Default = nil,
     Multi = false,
     Callback = function(Value)
-        SelectedPlayerID = Value
+        SelectedPlayerName = Value
+
+        local plr = Players:FindFirstChild(Value)
+        if plr then
+            SelectedPlayerID = plr.UserId
+        else
+            SelectedPlayerID = nil
+        end
     end,
 })
 
--- Auto Trade Toggle
-local isAutoTrading = false
+-- auto update player list
+Players.PlayerAdded:Connect(function()
+    PlayerDropdown:SetValues(GetPlayerNames())
+end)
 
+Players.PlayerRemoving:Connect(function()
+    PlayerDropdown:SetValues(GetPlayerNames())
+end)
+
+-- ==================== TOGGLE ====================
 TradeGroup:AddToggle("AutoTradeToggle", {
     Text = "Auto Trade",
     Default = false,
@@ -729,40 +759,58 @@ TradeGroup:AddToggle("AutoTradeToggle", {
     end,
 })
 
--- ==================== AUTO TRADE LOGIC ====================
+-- ==================== AUTO TRADE ====================
 function StartAutoTrade()
     task.spawn(function()
         while isAutoTrading do
-            wait(1)
+            task.wait(1)
 
             if not SelectedPlayerID then continue end
 
-            local backpack = game.Players.LocalPlayer.Backpack
+            local player = Players.LocalPlayer
+            local backpack = player.Backpack
+            local humanoid = player.Character and player.Character:FindFirstChild("Humanoid")
 
-            for _, brainrotName in ipairs(SelectedBrainrots) do
+            -- 🔥 nếu không chọn brainrot → trade tất cả
+            local list = SelectedBrainrots
+            if next(list) == nil then
+                list = {}
+                for _, tool in pairs(backpack:GetChildren()) do
+                    list[tool.Name] = true
+                end
+            end
+
+            for brainrotName, _ in pairs(list) do
                 local tool = backpack:FindFirstChild(brainrotName)
+
                 if tool then
                     local hasMutation = true
+
                     if SelectedMutation then
-                        hasMutation = tool:FindFirstChild(SelectedMutation) or tool:FindFirstChild(SelectedMutation, true)
+                        local inner = tool:FindFirstChild(brainrotName)
+                        if not inner or not inner:FindFirstChild(SelectedMutation) then
+                            hasMutation = false
+                        end
                     end
 
-                    if hasMutation then
-                        game.Players.LocalPlayer.Character.Humanoid:EquipTool(tool)
-                        wait(0.3)
+                    if hasMutation and humanoid then
+                        humanoid:UnequipTools()
+                        task.wait(0.1)
+
+                        humanoid:EquipTool(tool)
+                        task.wait(0.4)
                     end
                 end
             end
 
-            -- Send Trade Request
-            if SelectedPlayerID then
-                local args = {SelectedPlayerID}
-                game:GetService("ReplicatedStorage"):WaitForChild("Shared")
-                    :WaitForChild("Packages"):WaitForChild("Network")
-                    :WaitForChild("rev_GiftRequest"):FireServer(unpack(args))
-            end
+            -- 🔥 gửi trade
+            ReplicatedStorage:WaitForChild("Shared")
+                :WaitForChild("Packages")
+                :WaitForChild("Network")
+                :WaitForChild("rev_GiftRequest")
+                :FireServer(SelectedPlayerID)
 
-            wait(2)
+            task.wait(2)
         end
     end)
 end
