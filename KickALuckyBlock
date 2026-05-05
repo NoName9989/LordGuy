@@ -17,6 +17,7 @@ local Window = Library:CreateWindow({
 local Tabs = {
     Farm = Window:AddTab("Farm", "sword"),
     Automatic = Window:AddTab("Automatic", "bolt"),
+    ["Trade + Favorite"]= Window:AddTab("Trade + Favorite", "heart"),
     Shop = Window:AddTab("Shop", "shopping-cart"),
     ["FPS Boost"] = Window:AddTab("FPS Boost", "zap"),
     Misc = Window:AddTab("Misc", "component"),
