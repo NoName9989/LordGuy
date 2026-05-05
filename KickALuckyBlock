@@ -253,6 +253,8 @@ function StartFindMutationFarm()
     local TweenService = game:GetService("TweenService")
 
     while isFindMutationFarming do
+        print("🔄 [Find Mutation] Bắt đầu 1 cycle")
+
         local player = game.Players.LocalPlayer
         local character = player.Character or player.CharacterAdded:Wait()
         local root = character:WaitForChild("HumanoidRootPart")
@@ -281,16 +283,21 @@ function StartFindMutationFarm()
         conn:Disconnect()
         if not isFindMutationFarming then break end
 
-        -- Đợi ĐỦ 4 giây sau khi wave xuất hiện
+        print("⏳ Đợi 4 giây sau wave...")
         wait(4)
+        print("✅ Đã đợi xong 4 giây → Bắt đầu scan Debris")
 
-        -- ==================== SCAN CHỈ 1 LẦN SAU 4 GIÂY ====================
+        -- ==================== SCAN CHỈ TRONG DEBRIS ====================
         local hasDesiredMutation = false
         local debris = workspace:FindFirstChild("Debris")
 
-        if debris then
+        if not debris then
+            print("❌ Không tìm thấy workspace.Debris")
+        else
+            print("🔎 Tìm thấy Debris, có", #debris:GetChildren(), "object")
             for _, model in ipairs(debris:GetChildren()) do
                 if model:IsA("Model") then
+                    print("   └─ Model:", model.Name)
                     for _, mutName in ipairs(SelectedMutations) do
                         if model:FindFirstChild(mutName) or model:FindFirstChild(mutName, true) then
                             hasDesiredMutation = true
@@ -301,6 +308,12 @@ function StartFindMutationFarm()
                     if hasDesiredMutation then break end
                 end
             end
+        end
+
+        if hasDesiredMutation then
+            print("🚀 Có mutation → Tween về đích")
+        else
+            print("❌ Không tìm thấy mutation → TP huỷ")
         end
 
         local target = Vector3.new(699.77, 3.00, 231.99)
