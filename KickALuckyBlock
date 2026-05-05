@@ -105,41 +105,68 @@ KickFarmSettingGroup:AddDivider()
 
 KickFarmSettingGroup:AddLabel("Extra Tween Speed (0 - 200)")
 
+local isUpdating = false
+
 local ExtraSpeedSlider = KickFarmSettingGroup:AddSlider("ExtraSpeedSlider", {
     Text = "Extra Tween Speed",
     Default = 0,
-    Min = 0,
+    Min = -60,
     Max = 200,
     Rounding = 0,
     Increment = 5,
-    Callback = function(v) TweenExtraSpeed = v end,
+    Callback = function(v)
+        if isUpdating then return end
+
+        TweenExtraSpeed = v
+
+        isUpdating = true
+        ExtraSpeedInput:SetValue(tostring(v))
+        isUpdating = false
+    end,
 })
 
 local ExtraSpeedInput = KickFarmSettingGroup:AddInput("ExtraSpeedInput", {
     Default = "0",
-    Numeric = true,
-    Finished = true,
+    Numeric = false, -- 🔥 cho phép xử lý tay (an toàn hơn)
+    Finished = false, -- 🔥 không cần nhấn Enter
     Placeholder = "0 - 200",
+
     Callback = function(text)
-        local num = tonumber(text)
+        if isUpdating then return end
+
+        -- 🔥 lọc số
+        local num = tonumber(text:match("%d+"))
+
         if num and num >= 0 and num <= 200 then
             TweenExtraSpeed = num
+
+            isUpdating = true
             ExtraSpeedSlider:SetValue(num)
+            isUpdating = false
         else
+            -- reset nếu sai
             TweenExtraSpeed = 0
+
+            isUpdating = true
             ExtraSpeedSlider:SetValue(0)
             ExtraSpeedInput:SetValue("0")
+            isUpdating = false
         end
     end,
 })
 
 Options.ExtraSpeedSlider:OnChanged(function()
+    if isUpdating then return end
+
     local val = Options.ExtraSpeedSlider.Value
+
+    isUpdating = true
     ExtraSpeedInput:SetValue(tostring(val))
+    isUpdating = false
 end)
 
--- ==================== FIND MUTATION FARM ====================
-local MutationFarmGroup = Tabs.Farm:AddRightGroupbox("Find Mutation Farm")
+-- ==================== FARM ====================
+local MutationFarmGroup = Tabs.Farm:AddRightGroupbox("Farm")
 
 local isKickFarming = false
 local kickTask = nil
@@ -147,7 +174,7 @@ local SelectedMutations = {}
 
 -- ==================== UI ====================
 MutationFarmGroup:AddDropdown("MutationDropdown", {
-    Text = "Find Mutation (Multi)",
+    Text = "Find Mutation",
     Values = {"Golden", "Diamond", "Plasma", "Molten", "Radioactive", "Shadow", "Electrified", "Rainbow"},
     Default = {},
     Multi = true,
@@ -157,7 +184,7 @@ MutationFarmGroup:AddDropdown("MutationDropdown", {
 })
 
 MutationFarmGroup:AddToggle("EnableFindMutationFarmToggle", {
-    Text = "Enable Find Mutation Farm",
+    Text = "Enable Farm",
     Default = false,
     Callback = function(state)
         isKickFarming = state
