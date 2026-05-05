@@ -281,37 +281,31 @@ function StartFindMutationFarm()
         conn:Disconnect()
         if not isFindMutationFarming then break end
 
+        -- Đợi ĐỦ 4 giây sau khi wave xuất hiện
         wait(4)
 
-        -- ==================== SCAN MUTATION ====================
-        print("🔎 [Find Mutation] Bắt đầu scan sau 4 giây...")
-
+        -- ==================== SCAN CHỈ 1 LẦN SAU 4 GIÂY ====================
         local hasDesiredMutation = false
         local debris = workspace:FindFirstChild("Debris")
 
         if debris then
             for _, model in ipairs(debris:GetChildren()) do
                 if model:IsA("Model") then
-                    print("   └─ Model tìm thấy:", model.Name)
-
                     for _, mutName in ipairs(SelectedMutations) do
                         if model:FindFirstChild(mutName) or model:FindFirstChild(mutName, true) then
                             hasDesiredMutation = true
-                            print("✅ TÌM THẤY MUTATION:", mutName, "trong model:", model.Name)
+                            print("✅ TÌM THẤY MUTATION:", mutName, "trong", model.Name)
                             break
                         end
                     end
                     if hasDesiredMutation then break end
                 end
             end
-        else
-            print("❌ Không tìm thấy Debris")
         end
 
         local target = Vector3.new(699.77, 3.00, 231.99)
 
         if hasDesiredMutation then
-            print("🚀 Có mutation mong muốn → Tween về đích")
             local baseSpeed = humanoid.WalkSpeed
             local finalSpeed = baseSpeed + TweenExtraSpeed
             if finalSpeed < 20 then finalSpeed = 120 end
@@ -322,7 +316,6 @@ function StartFindMutationFarm()
             tween:Play()
             tween.Completed:Wait()
         else
-            print("❌ Không tìm thấy mutation → TP huỷ")
             root.CFrame = CFrame.new(713.38, 3.00, 233.94)
         end
 
