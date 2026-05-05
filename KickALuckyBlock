@@ -263,8 +263,8 @@ until tick() - t >= 4 or not isKickFarming
 end
 
         -- 6. Có → farm (REAL-TIME MOVE)
-local RunService = game:GetService("RunService")
-local target = Vector3.new(699.77, root.Position.Y, 231.99)
+        local RunService = game:GetService("RunService")
+local target = Vector3.new(699.77, 3.00, 231.99)
 
 local connection
 connection = RunService.Heartbeat:Connect(function(dt)
@@ -273,8 +273,11 @@ connection = RunService.Heartbeat:Connect(function(dt)
         return
     end
 
-    local distance = (target - root.Position).Magnitude
+    local currentPos = root.Position
+    local distance = (target - currentPos).Magnitude
+
     if distance <= 1 then
+        root.CFrame = CFrame.new(target)
         connection:Disconnect()
         return
     end
@@ -282,11 +285,20 @@ connection = RunService.Heartbeat:Connect(function(dt)
     local speed = humanoid.WalkSpeed + TweenExtraSpeed
     if speed < 20 then speed = 20 end
 
-    local direction = (target - root.Position).Unit
-    root.CFrame = root.CFrame + direction * speed * dt
+    -- 🔥 chỉ lấy XZ
+    local direction = Vector3.new(
+        target.X - currentPos.X,
+        0,
+        target.Z - currentPos.Z
+    ).Unit
+
+    local move = direction * speed * dt
+    local newPos = currentPos + move
+
+    -- 🔥 ÉP Y LUÔN BẰNG target.Y
+    root.CFrame = CFrame.new(newPos.X, target.Y, newPos.Z)
 end)
 
--- đợi tới khi tới nơi
 repeat task.wait() until not connection or not connection.Connected
 
         -- 7. Delay (DÙNG FarmDelay)
