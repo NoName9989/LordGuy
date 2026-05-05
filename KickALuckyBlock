@@ -45,7 +45,7 @@ local RatioSlider = KickFarmSettingGroup:AddSlider("RatioSlider", {
 local RatioInput = KickFarmSettingGroup:AddInput("RatioInput", {
     Default = "1",
     Numeric = true,
-    Finished = true,
+    Finished = false
     Placeholder = "0.1 - 1.0",
     Callback = function(text)
         local num = tonumber(text)
@@ -81,7 +81,7 @@ local DelaySlider = KickFarmSettingGroup:AddSlider("DelaySlider", {
 local DelayInput = KickFarmSettingGroup:AddInput("DelayInput", {
     Default = "1",
     Numeric = true,
-    Finished = true,
+    Finished = false,
     Placeholder = "1 - 10",
     Callback = function(text)
         local num = tonumber(text)
@@ -110,59 +110,38 @@ local isUpdating = false
 local ExtraSpeedSlider = KickFarmSettingGroup:AddSlider("ExtraSpeedSlider", {
     Text = "Extra Tween Speed",
     Default = 0,
-    Min = -60,
+    Min = -60, -- 🔥 cho âm
     Max = 200,
     Rounding = 0,
     Increment = 5,
     Callback = function(v)
-        if isUpdating then return end
-
         TweenExtraSpeed = v
-
-        isUpdating = true
-        ExtraSpeedInput:SetValue(tostring(v))
-        isUpdating = false
     end,
 })
 
 local ExtraSpeedInput = KickFarmSettingGroup:AddInput("ExtraSpeedInput", {
     Default = "0",
-    Numeric = false, 
-    Finished = false, 
+    Numeric = true, 
+    Finished = false,
     Placeholder = "-60 - 200",
 
     Callback = function(text)
-        if isUpdating then return end
-
-        -- 🔥 lọc số
-        local num = tonumber(text:match("%d+"))
+        local num = tonumber(text)
 
         if num and num >= -60 and num <= 200 then
             TweenExtraSpeed = num
-
-            isUpdating = true
             ExtraSpeedSlider:SetValue(num)
-            isUpdating = false
         else
-            -- reset nếu sai
             TweenExtraSpeed = 0
-
-            isUpdating = true
             ExtraSpeedSlider:SetValue(0)
             ExtraSpeedInput:SetValue("0")
-            isUpdating = false
         end
     end,
 })
 
 Options.ExtraSpeedSlider:OnChanged(function()
-    if isUpdating then return end
-
     local val = Options.ExtraSpeedSlider.Value
-
-    isUpdating = true
     ExtraSpeedInput:SetValue(tostring(val))
-    isUpdating = false
 end)
 
 -- ==================== FARM ====================
