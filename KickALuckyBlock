@@ -216,22 +216,14 @@ function StartKickFarm()
     kickTask = nil
 end
 
--- ==================== SERVICES ====================
-local TweenService = game:GetService("TweenService")
-
--- ==================== SETTINGS ====================
-local KickRatio = 1
-local FarmDelay = 1
-local TweenExtraSpeed = 0
+-- ==================== FIND MUTATION FARM ====================
+local MutationFarmGroup = Tabs.Farm:AddRightGroupbox("Find Mutation Farm")
 
 local isKickFarming = false
 local kickTask = nil
 local SelectedMutations = {}
 
 -- ==================== UI ====================
-local MutationFarmGroup = Tabs.Farm:AddRightGroupbox("Find Mutation Farm")
-
--- 🎯 MUTATION SELECT
 MutationFarmGroup:AddDropdown("MutationDropdown", {
     Text = "Find Mutation (Multi)",
     Values = {"Golden", "Diamond", "Plasma", "Molten", "Radioactive", "Shadow", "Electrified", "Rainbow"},
@@ -239,52 +231,9 @@ MutationFarmGroup:AddDropdown("MutationDropdown", {
     Multi = true,
     Callback = function(Value)
         SelectedMutations = Value
-
-        print("📌 Selected:")
-        for k,v in pairs(Value) do
-            print("   ", k, v)
-        end
     end,
 })
 
--- 🎯 SETTINGS CONTROL
-MutationFarmGroup:AddSlider("KickRatioSlider", {
-    Text = "Kick Ratio",
-    Min = 1,
-    Max = 10,
-    Default = 1,
-    Rounding = 0,
-    Callback = function(Value)
-        KickRatio = Value
-        print("🥊 KickRatio:", Value)
-    end,
-})
-
-MutationFarmGroup:AddSlider("FarmDelaySlider", {
-    Text = "Farm Delay",
-    Min = 0,
-    Max = 5,
-    Default = 1,
-    Rounding = 1,
-    Callback = function(Value)
-        FarmDelay = Value
-        print("⏱ FarmDelay:", Value)
-    end,
-})
-
-MutationFarmGroup:AddSlider("TweenSpeedSlider", {
-    Text = "Tween Extra Speed",
-    Min = 0,
-    Max = 200,
-    Default = 0,
-    Rounding = 0,
-    Callback = function(Value)
-        TweenExtraSpeed = Value
-        print("⚡ TweenExtraSpeed:", Value)
-    end,
-})
-
--- 🎯 TOGGLE
 MutationFarmGroup:AddToggle("EnableFindMutationFarmToggle", {
     Text = "Enable Find Mutation Farm",
     Default = false,
@@ -316,7 +265,6 @@ local function FindNearbyMutation(root)
                 if dist <= 5 then
                     for _, child in pairs(obj:GetChildren()) do
                         if SelectedMutations[child.Name] then
-                            print("🔥 MATCH:", child.Name)
                             return obj, child.Name
                         end
                     end
@@ -328,7 +276,7 @@ local function FindNearbyMutation(root)
     return nil
 end
 
--- ==================== MAIN FARM ====================
+-- ==================== MAIN ====================
 function StartKickFarm()
     while isKickFarming do
         local player = game.Players.LocalPlayer
@@ -336,21 +284,18 @@ function StartKickFarm()
         local root = character:WaitForChild("HumanoidRootPart")
         local humanoid = character:WaitForChild("Humanoid")
 
-        print("\n===== NEW CYCLE =====")
-
-        -- 1. TP
+        -- 1. TP đến điểm kick
         root.CFrame = CFrame.new(690.45, 2.99, 231.49)
         task.wait(1)
 
-        -- 2. 🔥 KICK (dùng KickRatio)
-        print("🥊 Kick với ratio:", KickRatio)
+        -- 2. Kick (DÙNG BIẾN NGOÀI)
         game:GetService("ReplicatedStorage"):WaitForChild("Shared")
             :WaitForChild("Packages"):WaitForChild("Network")
             :WaitForChild("rev_KickEvent"):FireServer(KickRatio)
 
         task.wait(1)
 
-        -- 3. WAIT WAVE
+        -- 3. Đợi wave
         local waveFolder = workspace:WaitForChild("Waves")
         local waveDetected = false
 
@@ -368,7 +313,7 @@ function StartKickFarm()
         conn:Disconnect()
         if not isKickFarming then break end
 
-        -- 4. CHECK MUTATION
+        -- 4. Check mutation trong 4s
         local foundMutation = nil
         local t = tick()
 
@@ -383,39 +328,37 @@ function StartKickFarm()
 
         if not isKickFarming then break end
 
-        -- 5. FAIL → HUỶ
+        -- 5. Không có → huỷ
         if not foundMutation then
-            print("❌ Không có mutation → HUỶ")
             root.CFrame = CFrame.new(714.74, 3.00, 232.46)
             task.wait(1)
             continue
         end
 
-        print("✅ Found:", foundMutation)
-
-        -- 6. 🚀 FARM (dùng TweenExtraSpeed)
+        -- 6. Có → farm (DÙNG TweenExtraSpeed)
         local target = Vector3.new(699.77, 3.00, 231.99)
 
         local baseSpeed = humanoid.WalkSpeed
         local finalSpeed = baseSpeed + TweenExtraSpeed
 
-        if finalSpeed < 20 then finalSpeed = 120 end
+        if finalSpeed < 20 then 
+            finalSpeed = 20 
+        end
 
         local distance = (target - root.Position).Magnitude
         local tweenTime = distance / finalSpeed
 
-        print("⚡ Speed:", finalSpeed, "| Time:", tweenTime)
-
-        local tween = TweenService:Create(root, TweenInfo.new(tweenTime, Enum.EasingStyle.Linear), {
-            CFrame = CFrame.new(target)
-        })
+        local tween = game:GetService("TweenService"):Create(
+            root,
+            TweenInfo.new(tweenTime, Enum.EasingStyle.Linear),
+            {CFrame = CFrame.new(target)}
+        )
 
         tween:Play()
         tween.Completed:Wait()
 
-        -- 7. ⏱ DELAY (dùng FarmDelay)
+        -- 7. Delay (DÙNG FarmDelay)
         if isKickFarming then 
-            print("⏱ Delay:", FarmDelay)
             task.wait(FarmDelay)
         end
     end
