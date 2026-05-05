@@ -262,27 +262,32 @@ until tick() - t >= 4 or not isKickFarming
     continue
 end
 
-        -- 6. Có → farm (DÙNG TweenExtraSpeed)
-        local target = Vector3.new(699.77, 3.00, 231.99)
+        -- 6. Có → farm (REAL-TIME MOVE)
+local RunService = game:GetService("RunService")
+local target = Vector3.new(699.77, root.Position.Y, 231.99)
 
-        local baseSpeed = humanoid.WalkSpeed
-        local finalSpeed = baseSpeed + TweenExtraSpeed
+local connection
+connection = RunService.Heartbeat:Connect(function(dt)
+    if not isKickFarming then
+        connection:Disconnect()
+        return
+    end
 
-        if finalSpeed < 20 then 
-            finalSpeed = 20 
-        end
+    local distance = (target - root.Position).Magnitude
+    if distance <= 1 then
+        connection:Disconnect()
+        return
+    end
 
-        local distance = (target - root.Position).Magnitude
-        local tweenTime = distance / finalSpeed
+    local speed = humanoid.WalkSpeed + TweenExtraSpeed
+    if speed < 20 then speed = 20 end
 
-        local tween = game:GetService("TweenService"):Create(
-            root,
-            TweenInfo.new(tweenTime, Enum.EasingStyle.Linear),
-            {CFrame = CFrame.new(target)}
-        )
+    local direction = (target - root.Position).Unit
+    root.CFrame = root.CFrame + direction * speed * dt
+end)
 
-        tween:Play()
-        tween.Completed:Wait()
+-- đợi tới khi tới nơi
+repeat task.wait() until not connection or not connection.Connected
 
         -- 7. Delay (DÙNG FarmDelay)
         if isKickFarming then 
