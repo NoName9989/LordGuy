@@ -8,7 +8,7 @@ local Options = Library.Options
 
 local Window = Library:CreateWindow({
     Title = "LordCat",
-    Footer = "Version 1.3.7",
+    Footer = "Version 1.3.8",
     Icon = 73071239069153,
     NotifySide = "Right",
     ShowCustomCursor = true,
@@ -724,12 +724,39 @@ end
 
 -- ==================== BRAINROT ====================
 TradeGroup:AddDropdown("BrainrotDropdown", {
-    Text = "Select Brainrot (Multi)",
+    Text = "Select Brainrot",
     Values = {
-        "Cappuccino Clownino","Rhino Toasterino","Bombardiro Crocodilo","Bombini Gusini"
+        "Noobini Pizzanini","Lirili Larila","Tim Cheese","Talpa Di Fero","Svinina Bombardino",
+        "Pipi Kiwi","Trippi Troppi","Fruli Frula","Gangster Footera","Bobrito Bandito",
+        "Boneca Ambalabu","Ta Ta Ta Ta Sahur","Ballerina Cappuccina","Cappuccino Assassino",
+        "Brr Brr Patapim","Cacto Hipopotamo","Garamararam","Madung","Waterdino",
+        "Pesto Mortioni","Pannaburro","Orcalero","Mangolini Parrocini","John Pork",
+        "Gattatino Nyanino","Chimpanzini Bananini","Plan Red","Plan Blue","Capi Taco",
+        "Bambini Crostini","Trulimero Trulicina","Elefantucci Bananucci",
+        "Bananita Dolphinita","Salamino Pinguino","Penguino Cocosino","67",
+        "Burbaloni Luliloli","Chef Crabracadabra","Capybara Eggplant","Bangello",
+        "Elefanto Frigo","Rinooccio Verdini","Glorbo Fruttodrillo","Udin Din Din Dun",
+        "Pandaccini Bananini","Octopusini Bluberini","Strawberelli Flamingelli",
+        "Sigma Boy","Frigo Camelo","Orangutini Ananasini","Rhino Toasterino",
+        "Bombardiro Crocodilo","Bombini Gusini","Castlino Fortini","Tuff Toucan",
+        "Fryuro","Burguro","Guest666","Zibra Zubra Zibralini","Cavallo Virtuso",
+        "Gorillo Watermelondrillo","Cocofanto Elefanto","Bambu Sahur","W or L",
+        "Girafa Celeste","Tralalero Tralala","Tralalerita Tralala","Peant Jarro",
+        "Dipperi Chiperini","Rexosaurus","1x1x1x1","Matteo","Alessio",
+        "Espresso Signora","Tripi Tropi Tropa Tripa","SWAG SODA","Stoppo Luminino",
+        "Torrtuginni Dragonfrutini","Tictac Sahur","Cactus Pingu","Los Primos Blue",
+        "La Vacca Saturno Saturnita","Agarrini La Palini","Bottellini",
+        "Karkerkar Kurkur","Blackhole Goat","Compactoroni Diskaloni",
+        "Cappuccino Clownino","Nuclearo Dinossauro","Los Nooo My Hotspotsitos",
+        "Chillin Chilli","Crazylone Pizaione","Corn Sahur","Meowl",
+        "Strawberry Elephant","Dragonfrutina Dolphinita","Guerriro Digitale",
+        "Chicleteira Bicicleteira","Pot Hotspot","Krupuk Pagi Pagi",
+        "Beluga Beluga","Tralaledon","Anpali Babel","Ketchuru Matsuru",
+        "Mastodontico Telepiedone","Ketupat Kepat"
     },
     Default = {},
     Multi = true,
+    Searchable = true,
     Callback = function(Value)
         SelectedBrainrots = Value
     end,
@@ -741,6 +768,7 @@ TradeGroup:AddDropdown("MutationDropdown", {
     Values = {"None","Golden","Diamond","Plasma","Molten","Radioactive","Shadow","Electrified","Rainbow"},
     Default = "None",
     Multi = false,
+    Searchable = true,
     Callback = function(Value)
         if Value == "None" then
             SelectedMutation = nil
@@ -756,6 +784,7 @@ local PlayerDropdown = TradeGroup:AddDropdown("PlayerDropdown", {
     Values = GetPlayerNames(),
     Default = nil,
     Multi = false,
+    Searchable = true,
     Callback = function(Value)
         local plr = Players:FindFirstChild(Value)
         if plr then
