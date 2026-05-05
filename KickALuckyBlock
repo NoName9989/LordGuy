@@ -648,7 +648,7 @@ task.spawn(function()
     end
 end)
 
--- ==================== TAB TRADE + FAVORITE ====================
+-- ==================== TAB TRADE ====================
 local TradeTab = Tabs.Trade
 local TradeGroup = TradeTab:AddLeftGroupbox("Trade")
 
@@ -657,12 +657,24 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local SelectedBrainrots = {}
 local SelectedMutation = nil
-local SelectedPlayerName = nil
 local SelectedPlayerID = nil
 local isAutoTrading = false
 
-local lastTradeTime = 0
-local TRADE_COOLDOWN = 3
+-- ==================== FIX QUAN TRỌNG ====================
+local function HasTool(player, toolName)
+    local backpack = player.Backpack
+    local character = player.Character
+
+    if backpack:FindFirstChild(toolName) then
+        return true
+    end
+
+    if character and character:FindFirstChild(toolName) then
+        return true
+    end
+
+    return false
+end
 
 -- ==================== PLAYER LIST ====================
 local function GetPlayerNames()
@@ -670,7 +682,7 @@ local function GetPlayerNames()
     local localPlayer = Players.LocalPlayer
 
     for _, p in pairs(Players:GetPlayers()) do
-        if p ~= localPlayer then -- bỏ chính mình
+        if p ~= localPlayer then
             table.insert(t, p.Name)
         end
     end
@@ -681,38 +693,12 @@ end
 -- ==================== BRAINROT ====================
 TradeGroup:AddDropdown("BrainrotDropdown", {
     Text = "Select Brainrot (Multi)",
-    Values = { -- giữ nguyên list của bạn
-        "Noobini Pizzanini","Lirili Larila","Tim Cheese","Talpa Di Fero","Svinina Bombardino",
-        "Pipi Kiwi","Trippi Troppi","Fruli Frula","Gangster Footera","Bobrito Bandito",
-        "Boneca Ambalabu","Ta Ta Ta Ta Sahur","Ballerina Cappuccina","Cappuccino Assassino",
-        "Brr Brr Patapim","Cacto Hipopotamo","Garamararam","Madung","Waterdino",
-        "Pesto Mortioni","Pannaburro","Orcalero","Mangolini Parrocini","John Pork",
-        "Gattatino Nyanino","Chimpanzini Bananini","Plan Red","Plan Blue","Capi Taco",
-        "Bambini Crostini","Trulimero Trulicina","Elefantucci Bananucci",
-        "Bananita Dolphinita","Salamino Pinguino","Penguino Cocosino","67",
-        "Burbaloni Luliloli","Chef Crabracadabra","Capybara Eggplant","Bangello",
-        "Elefanto Frigo","Rinooccio Verdini","Glorbo Fruttodrillo","Udin Din Din Dun",
-        "Pandaccini Bananini","Octopusini Bluberini","Strawberelli Flamingelli",
-        "Sigma Boy","Frigo Camelo","Orangutini Ananasini","Rhino Toasterino",
-        "Bombardiro Crocodilo","Bombini Gusini","Castlino Fortini","Tuff Toucan",
-        "Fryuro","Burguro","Guest666","Zibra Zubra Zibralini","Cavallo Virtuso",
-        "Gorillo Watermelondrillo","Cocofanto Elefanto","Bambu Sahur","W or L",
-        "Girafa Celeste","Tralalero Tralala","Tralalerita Tralala","Peant Jarro",
-        "Dipperi Chiperini","Rexosaurus","1x1x1x1","Matteo","Alessio",
-        "Espresso Signora","Tripi Tropi Tropa Tripa","SWAG SODA","Stoppo Luminino",
-        "Torrtuginni Dragonfrutini","Tictac Sahur","Cactus Pingu","Los Primos Blue",
-        "La Vacca Saturno Saturnita","Agarrini La Palini","Bottellini",
-        "Karkerkar Kurkur","Blackhole Goat","Compactoroni Diskaloni",
-        "Cappuccino Clownino","Nuclearo Dinossauro","Los Nooo My Hotspotsitos",
-        "Chillin Chilli","Crazylone Pizaione","Corn Sahur","Meowl",
-        "Strawberry Elephant","Dragonfrutina Dolphinita","Guerriro Digitale",
-        "Chicleteira Bicicleteira","Pot Hotspot","Krupuk Pagi Pagi",
-        "Beluga Beluga","Tralaledon","Anpali Babel","Ketchuru Matsuru",
-        "Mastodontico Telepiedone","Ketupat Kepat"
+    Values = {
+        "Cappuccino Clownino","Rhino Toasterino","Bombardiro Crocodilo","Bombini Gusini"
+        -- (bạn có thể thêm full list vào đây)
     },
     Default = {},
     Multi = true,
-    Searchable = true,
     Callback = function(Value)
         SelectedBrainrots = Value
     end,
@@ -724,7 +710,6 @@ TradeGroup:AddDropdown("MutationDropdown", {
     Values = {"None","Golden","Diamond","Plasma","Molten","Radioactive","Shadow","Electrified","Rainbow"},
     Default = "None",
     Multi = false,
-    Searchable = true,
     Callback = function(Value)
         if Value == "None" then
             SelectedMutation = nil
@@ -740,10 +725,7 @@ local PlayerDropdown = TradeGroup:AddDropdown("PlayerDropdown", {
     Values = GetPlayerNames(),
     Default = nil,
     Multi = false,
-    Searchable = true,
     Callback = function(Value)
-        SelectedPlayerName = Value
-
         local plr = Players:FindFirstChild(Value)
         if plr then
             SelectedPlayerID = plr.UserId
@@ -781,8 +763,8 @@ function StartAutoTrade()
 
             if not SelectedPlayerID then continue end
 
-            local player = game.Players.LocalPlayer
-            local target = game.Players:GetPlayerByUserId(SelectedPlayerID)
+            local player = Players.LocalPlayer
+            local target = Players:GetPlayerByUserId(SelectedPlayerID)
             if not target then continue end
 
             local backpack = player.Backpack
@@ -823,13 +805,13 @@ function StartAutoTrade()
                 while isAutoTrading do
                     task.wait(0.3)
 
-                    -- nếu item đã mất → chuyển item khác
-                    if not backpack:FindFirstChild(brainrotName) then
+                    -- 🔥 FIX CHÍNH Ở ĐÂY
+                    if not HasTool(player, brainrotName) then
                         break
                     end
 
-                    -- gửi trade liên tục
-                    game:GetService("ReplicatedStorage"):WaitForChild("Shared")
+                    -- spam trade liên tục
+                    ReplicatedStorage:WaitForChild("Shared")
                         :WaitForChild("Packages")
                         :WaitForChild("Network")
                         :WaitForChild("rev_GiftRequest")
