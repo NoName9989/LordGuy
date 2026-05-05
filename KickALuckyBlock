@@ -238,6 +238,7 @@ MutationFarmGroup:AddDropdown("MutationDropdown", {
     Multi = true,
     Callback = function(Value)
         SelectedMutations = Value
+        print("📌 Selected Mutations:", table.concat(Value, ", "))
     end,
 })
 
@@ -246,6 +247,7 @@ MutationFarmGroup:AddToggle("EnableFindMutationFarmToggle", {
     Default = false,
     Callback = function(state)
         isKickFarming = state
+        print("⚙️ Farm State:", state)
 
         if state then
             if kickTask then task.cancel(kickTask) end
@@ -257,31 +259,51 @@ MutationFarmGroup:AddToggle("EnableFindMutationFarmToggle", {
     end,
 })
 
--- ==================== FIND MUTATION ====================
+-- ==================== FIND MUTATION (DEBUG) ====================
 local function FindNearbyMutation(root)
     local debris = workspace:FindFirstChild("Debris")
-    if not debris then return nil end
+    if not debris then
+        warn("❌ Không thấy Debris")
+        return nil
+    end
 
     local radius = 5
+    print("🔍 Scan Debris | Total:", #debris:GetChildren())
 
     for _, obj in pairs(debris:GetChildren()) do
+        print("👉 Object:", obj.Name, "| Class:", obj.ClassName)
+
         if obj:IsA("Model") or obj:IsA("Folder") then
             local part = obj:FindFirstChildWhichIsA("BasePart")
 
-            if part then
-                local dist = (part.Position - root.Position).Magnitude
+            if not part then
+                warn("⚠️ Không có BasePart:", obj.Name)
+                continue
+            end
 
-                if dist <= radius then
-                    for _, child in pairs(obj:GetChildren()) do
-                        if table.find(SelectedMutations, child.Name) then
-                            return obj, child.Name
-                        end
+            local dist = (part.Position - root.Position).Magnitude
+            print("📏 Distance:", math.floor(dist))
+
+            if dist <= radius then
+                print("✅ Gần:", obj.Name)
+
+                for _, child in pairs(obj:GetChildren()) do
+                    print("   ↳ Child:", child.Name)
+
+                    if table.find(SelectedMutations, child.Name) then
+                        print("🔥 MATCH:", child.Name)
+                        return obj, child.Name
                     end
                 end
+
+                warn("❌ Gần nhưng sai mutation")
             end
+        else
+            warn("⚠️ Không phải Model/Folder:", obj.ClassName)
         end
     end
 
+    warn("❌ Không tìm thấy mutation hợp lệ")
     return nil
 end
 
@@ -293,23 +315,29 @@ function StartKickFarm()
         local root = character:WaitForChild("HumanoidRootPart")
         local humanoid = character:WaitForChild("Humanoid")
 
-        -- 1. TP đến điểm kick
+        print("\n================ NEW CYCLE ================")
+
+        -- 1. TP
+        print("📍 TP đến điểm kick")
         root.CFrame = CFrame.new(690.45, 2.99, 231.49)
         task.wait(1)
 
-        -- 2. Fire remote kick
+        -- 2. Kick
+        print("🥊 Fire Kick")
         game:GetService("ReplicatedStorage"):WaitForChild("Shared")
             :WaitForChild("Packages"):WaitForChild("Network")
             :WaitForChild("rev_KickEvent"):FireServer(KickRatio)
 
         task.wait(1)
 
-        -- 3. Đợi wave
+        -- 3. Wait wave
+        print("⏳ Đợi wave...")
         local waveFolder = workspace:WaitForChild("Waves")
         local waveDetected = false
 
         local conn = waveFolder.ChildAdded:Connect(function(child)
             if child:IsA("Model") or child:IsA("Folder") then
+                print("🌊 Wave detected:", child.Name)
                 waveDetected = true
             end
         end)
@@ -317,13 +345,17 @@ function StartKickFarm()
         local start = tick()
         repeat
             task.wait(0.5)
-            if tick() - start > 60 then break end
+            if tick() - start > 60 then
+                warn("⌛ Timeout wave")
+                break
+            end
         until waveDetected or not isKickFarming
 
         conn:Disconnect()
         if not isKickFarming then break end
 
-        -- 4. CHECK MUTATION TRONG 4s
+        -- 4. CHECK MUTATION
+        print("🔎 Bắt đầu check mutation (4s)")
         local foundMutation = nil
         local checkStart = tick()
 
@@ -340,14 +372,19 @@ function StartKickFarm()
 
         if not isKickFarming then break end
 
-        -- 5. Nếu KHÔNG có mutation hợp lệ → HUỶ
-        if not foundMutation then
+        -- 5. RESULT
+        if foundMutation then
+            print("✅ FOUND MUTATION:", foundMutation)
+        else
+            warn("❌ KHÔNG CÓ → HUỶ")
             root.CFrame = CFrame.new(714.74, 3.00, 232.46)
             task.wait(1)
             continue
         end
 
-        -- 6. Nếu CÓ mutation → FARM
+        -- 6. FARM
+        print("🚀 Bắt đầu farm")
+
         local target = Vector3.new(699.77, 3.00, 231.99)
 
         local baseSpeed = humanoid.WalkSpeed
@@ -357,12 +394,16 @@ function StartKickFarm()
         local distance = (target - root.Position).Magnitude
         local tweenTime = distance / finalSpeed
 
+        print("📏 Distance:", math.floor(distance), "| Time:", tweenTime)
+
         local tween = TweenService:Create(root, TweenInfo.new(tweenTime, Enum.EasingStyle.Linear), {
             CFrame = CFrame.new(target)
         })
 
         tween:Play()
         tween.Completed:Wait()
+
+        print("✅ Done 1 cycle")
 
         if isKickFarming then
             task.wait(FarmDelay)
