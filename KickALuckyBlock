@@ -283,43 +283,34 @@ function StartFindMutationFarm()
 
         wait(4)
 
-        -- ==================== SCAN MUTATION (DEBUG SIÊU RÕ) ====================
+        -- ==================== SCAN CHỈ TRONG 3 STUDS ====================
         local hasDesiredMutation = false
         local debris = workspace:FindFirstChild("Debris")
 
         if debris then
-            print("🔍 Bắt đầu scan Debris...")
+            local hrpPos = root.Position
 
             for _, model in ipairs(debris:GetChildren()) do
-                if model:IsA("Model") then
-                    print("   📦 Model:", model.Name)
-
-                    for _, mutName in ipairs(SelectedMutations) do
-                        print("      → Đang check mutation:", mutName)
-
-                        -- Kiểm tra trực tiếp + recursive
-                        local found = model:FindFirstChild(mutName) or model:FindFirstChild(mutName, true)
-
-                        if found then
-                            hasDesiredMutation = true
-                            print("🎯 ✅ TÌM THẤY MUTATION:", mutName, "trong", model.Name)
-                            print("   └─ Vị trí:", found:GetFullName())
-                            break
+                if model:IsA("Model") and model.PrimaryPart then
+                    local dist = (model.PrimaryPart.Position - hrpPos).Magnitude
+                    
+                    if dist <= 3 then   -- Giới hạn 3 studs
+                        for _, mutName in ipairs(SelectedMutations) do
+                            if model:FindFirstChild(mutName) or model:FindFirstChild(mutName, true) then
+                                hasDesiredMutation = true
+                                print("✅ TÌM THẤY:", mutName, "trong", model.Name, "(", string.format("%.2f", dist), "studs)")
+                                break
+                            end
                         end
+                        if hasDesiredMutation then break end
                     end
-                    if hasDesiredMutation then break end
                 end
             end
-        end
-
-        if not hasDesiredMutation then
-            print("❌ Không tìm thấy mutation nào trong Debris")
         end
 
         local target = Vector3.new(699.77, 3.00, 231.99)
 
         if hasDesiredMutation then
-            print("🚀 Có mutation → Tween về đích")
             local baseSpeed = humanoid.WalkSpeed
             local finalSpeed = baseSpeed + TweenExtraSpeed
             if finalSpeed < 20 then finalSpeed = 120 end
@@ -330,7 +321,6 @@ function StartFindMutationFarm()
             tween:Play()
             tween.Completed:Wait()
         else
-            print("❌ Không có mutation → TP huỷ")
             root.CFrame = CFrame.new(713.38, 3.00, 233.94)
         end
 
