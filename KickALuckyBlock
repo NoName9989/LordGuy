@@ -777,16 +777,17 @@ TradeGroup:AddToggle("AutoTradeToggle", {
 function StartAutoTrade()
     task.spawn(function()
         while isAutoTrading do
-            task.wait(1)
+            task.wait(0.5)
 
             if not SelectedPlayerID then continue end
 
-            local player = Players.LocalPlayer
-            local target = Players:GetPlayerByUserId(SelectedPlayerID)
+            local player = game.Players.LocalPlayer
+            local target = game.Players:GetPlayerByUserId(SelectedPlayerID)
             if not target then continue end
 
             local backpack = player.Backpack
             local humanoid = player.Character and player.Character:FindFirstChild("Humanoid")
+            if not humanoid then continue end
 
             -- nếu không chọn brainrot → lấy tất cả
             local list = SelectedBrainrots
@@ -797,45 +798,46 @@ function StartAutoTrade()
                 end
             end
 
+            -- 🔥 LOOP TỪNG ITEM
             for brainrotName, _ in pairs(list) do
                 local tool = backpack:FindFirstChild(brainrotName)
+                if not tool then continue end
 
-                if tool then
-                    local hasMutation = true
-
-                    if SelectedMutation then
-                        local inner = tool:FindFirstChild(brainrotName)
-                        if not inner or not inner:FindFirstChild(SelectedMutation) then
-                            hasMutation = false
-                        end
-                    end
-
-                    if hasMutation and humanoid then
-                        humanoid:UnequipTools()
-                        task.wait(0.1)
-
-                        humanoid:EquipTool(tool)
-                        task.wait(0.4)
+                -- check mutation
+                local hasMutation = true
+                if SelectedMutation then
+                    local inner = tool:FindFirstChild(brainrotName)
+                    if not inner or not inner:FindFirstChild(SelectedMutation) then
+                        hasMutation = false
                     end
                 end
-            end
 
-            -- 🔥 cooldown chống lỗi khi bị từ chối
-            local now = tick()
-            if now - lastTradeTime >= TRADE_COOLDOWN then
-                lastTradeTime = now
+                if not hasMutation then continue end
 
+                -- 🔥 EQUIP
                 humanoid:UnequipTools()
-                task.wait(0.2)
+                task.wait(0.1)
+                humanoid:EquipTool(tool)
 
-                ReplicatedStorage:WaitForChild("Shared")
-                    :WaitForChild("Packages")
-                    :WaitForChild("Network")
-                    :WaitForChild("rev_GiftRequest")
-                    :FireServer(SelectedPlayerID)
+                -- 🔥 LOOP GỬI TRADE CHO ITEM NÀY
+                while isAutoTrading do
+                    task.wait(0.3)
+
+                    -- nếu item đã mất → chuyển item khác
+                    if not backpack:FindFirstChild(brainrotName) then
+                        break
+                    end
+
+                    -- gửi trade liên tục
+                    game:GetService("ReplicatedStorage"):WaitForChild("Shared")
+                        :WaitForChild("Packages")
+                        :WaitForChild("Network")
+                        :WaitForChild("rev_GiftRequest")
+                        :FireServer(SelectedPlayerID)
+                end
+
+                if not isAutoTrading then break end
             end
-
-            task.wait(2)
         end
     end)
 end
