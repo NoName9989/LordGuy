@@ -237,16 +237,20 @@ function StartKickFarm()
 
         -- 4. Check mutation trong 4s
         local foundMutation = nil
-        local t = tick()
+local t = tick()
 
-        repeat
-            local _, mut = FindNearbyMutation(root)
-            if mut then
-                foundMutation = mut
-                break
-            end
-            task.wait(0.2)
-        until tick() - t >= 4 or not isKickFarming
+repeat
+    -- 🔥 CHỈ scan khi có chọn mutation
+    if next(SelectedMutations) ~= nil then
+        local _, mut = FindNearbyMutation(root)
+        if mut then
+            foundMutation = mut
+            break
+        end
+    end
+
+    task.wait(0.2)
+until tick() - t >= 4 or not isKickFarming
 
         if not isKickFarming then break end
 
