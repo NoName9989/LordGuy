@@ -238,7 +238,11 @@ MutationFarmGroup:AddDropdown("MutationDropdown", {
     Multi = true,
     Callback = function(Value)
         SelectedMutations = Value
-        print("📌 Selected Mutations:", table.concat(Value, ", "))
+
+        print("📌 SelectedMutations RAW:")
+        for k,v in pairs(SelectedMutations) do
+            print("   ", k, v)
+        end
     end,
 })
 
@@ -247,7 +251,7 @@ MutationFarmGroup:AddToggle("EnableFindMutationFarmToggle", {
     Default = false,
     Callback = function(state)
         isKickFarming = state
-        print("⚙️ Farm State:", state)
+        print("⚙️ Farm:", state)
 
         if state then
             if kickTask then task.cancel(kickTask) end
@@ -259,7 +263,7 @@ MutationFarmGroup:AddToggle("EnableFindMutationFarmToggle", {
     end,
 })
 
--- ==================== FIND MUTATION (DEBUG) ====================
+-- ==================== FIND MUTATION (FIXED) ====================
 local function FindNearbyMutation(root)
     local debris = workspace:FindFirstChild("Debris")
     if not debris then
@@ -268,10 +272,10 @@ local function FindNearbyMutation(root)
     end
 
     local radius = 5
-    print("🔍 Scan Debris | Total:", #debris:GetChildren())
+    print("🔍 Scan Debris:", #debris:GetChildren())
 
     for _, obj in pairs(debris:GetChildren()) do
-        print("👉 Object:", obj.Name, "| Class:", obj.ClassName)
+        print("👉 Object:", obj.Name, "|", obj.ClassName)
 
         if obj:IsA("Model") or obj:IsA("Folder") then
             local part = obj:FindFirstChildWhichIsA("BasePart")
@@ -290,7 +294,8 @@ local function FindNearbyMutation(root)
                 for _, child in pairs(obj:GetChildren()) do
                     print("   ↳ Child:", child.Name)
 
-                    if table.find(SelectedMutations, child.Name) then
+                    -- 🔥 FIX CHÍNH Ở ĐÂY
+                    if SelectedMutations[child.Name] then
                         print("🔥 MATCH:", child.Name)
                         return obj, child.Name
                     end
@@ -298,8 +303,6 @@ local function FindNearbyMutation(root)
 
                 warn("❌ Gần nhưng sai mutation")
             end
-        else
-            warn("⚠️ Không phải Model/Folder:", obj.ClassName)
         end
     end
 
@@ -318,26 +321,26 @@ function StartKickFarm()
         print("\n================ NEW CYCLE ================")
 
         -- 1. TP
-        print("📍 TP đến điểm kick")
+        print("📍 TP kick")
         root.CFrame = CFrame.new(690.45, 2.99, 231.49)
         task.wait(1)
 
         -- 2. Kick
-        print("🥊 Fire Kick")
+        print("🥊 Kick")
         game:GetService("ReplicatedStorage"):WaitForChild("Shared")
             :WaitForChild("Packages"):WaitForChild("Network")
             :WaitForChild("rev_KickEvent"):FireServer(KickRatio)
 
         task.wait(1)
 
-        -- 3. Wait wave
+        -- 3. WAIT WAVE
         print("⏳ Đợi wave...")
         local waveFolder = workspace:WaitForChild("Waves")
         local waveDetected = false
 
         local conn = waveFolder.ChildAdded:Connect(function(child)
             if child:IsA("Model") or child:IsA("Folder") then
-                print("🌊 Wave detected:", child.Name)
+                print("🌊 Wave:", child.Name)
                 waveDetected = true
             end
         end)
@@ -354,8 +357,8 @@ function StartKickFarm()
         conn:Disconnect()
         if not isKickFarming then break end
 
-        -- 4. CHECK MUTATION
-        print("🔎 Bắt đầu check mutation (4s)")
+        -- 4. CHECK MUTATION (4s)
+        print("🔎 Check mutation 4s")
         local foundMutation = nil
         local checkStart = tick()
 
@@ -374,7 +377,7 @@ function StartKickFarm()
 
         -- 5. RESULT
         if foundMutation then
-            print("✅ FOUND MUTATION:", foundMutation)
+            print("✅ FOUND:", foundMutation)
         else
             warn("❌ KHÔNG CÓ → HUỶ")
             root.CFrame = CFrame.new(714.74, 3.00, 232.46)
@@ -383,7 +386,7 @@ function StartKickFarm()
         end
 
         -- 6. FARM
-        print("🚀 Bắt đầu farm")
+        print("🚀 Farm")
 
         local target = Vector3.new(699.77, 3.00, 231.99)
 
@@ -394,7 +397,7 @@ function StartKickFarm()
         local distance = (target - root.Position).Magnitude
         local tweenTime = distance / finalSpeed
 
-        print("📏 Distance:", math.floor(distance), "| Time:", tweenTime)
+        print("📏 Dist:", math.floor(distance), "| Time:", tweenTime)
 
         local tween = TweenService:Create(root, TweenInfo.new(tweenTime, Enum.EasingStyle.Linear), {
             CFrame = CFrame.new(target)
@@ -403,7 +406,7 @@ function StartKickFarm()
         tween:Play()
         tween.Completed:Wait()
 
-        print("✅ Done 1 cycle")
+        print("✅ DONE")
 
         if isKickFarming then
             task.wait(FarmDelay)
