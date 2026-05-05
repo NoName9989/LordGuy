@@ -661,19 +661,27 @@ local SelectedPlayerName = nil
 local SelectedPlayerID = nil
 local isAutoTrading = false
 
+local lastTradeTime = 0
+local TRADE_COOLDOWN = 3
+
 -- ==================== PLAYER LIST ====================
 local function GetPlayerNames()
     local t = {}
+    local localPlayer = Players.LocalPlayer
+
     for _, p in pairs(Players:GetPlayers()) do
-        table.insert(t, p.Name)
+        if p ~= localPlayer then -- bỏ chính mình
+            table.insert(t, p.Name)
+        end
     end
+
     return t
 end
 
 -- ==================== BRAINROT ====================
 TradeGroup:AddDropdown("BrainrotDropdown", {
     Text = "Select Brainrot (Multi)",
-    Values = {
+    Values = { -- giữ nguyên list của bạn
         "Noobini Pizzanini","Lirili Larila","Tim Cheese","Talpa Di Fero","Svinina Bombardino",
         "Pipi Kiwi","Trippi Troppi","Fruli Frula","Gangster Footera","Bobrito Bandito",
         "Boneca Ambalabu","Ta Ta Ta Ta Sahur","Ballerina Cappuccina","Cappuccino Assassino",
@@ -704,6 +712,7 @@ TradeGroup:AddDropdown("BrainrotDropdown", {
     },
     Default = {},
     Multi = true,
+    Searchable = true,
     Callback = function(Value)
         SelectedBrainrots = Value
     end,
@@ -712,11 +721,16 @@ TradeGroup:AddDropdown("BrainrotDropdown", {
 -- ==================== MUTATION ====================
 TradeGroup:AddDropdown("MutationDropdown", {
     Text = "Select Mutation",
-    Values = {"Golden","Diamond","Plasma","Molten","Radioactive","Shadow","Electrified","Rainbow"},
-    Default = nil,
+    Values = {"None","Golden","Diamond","Plasma","Molten","Radioactive","Shadow","Electrified","Rainbow"},
+    Default = "None",
     Multi = false,
+    Searchable = true,
     Callback = function(Value)
-        SelectedMutation = Value
+        if Value == "None" then
+            SelectedMutation = nil
+        else
+            SelectedMutation = Value
+        end
     end,
 })
 
@@ -726,6 +740,7 @@ local PlayerDropdown = TradeGroup:AddDropdown("PlayerDropdown", {
     Values = GetPlayerNames(),
     Default = nil,
     Multi = false,
+    Searchable = true,
     Callback = function(Value)
         SelectedPlayerName = Value
 
@@ -738,7 +753,6 @@ local PlayerDropdown = TradeGroup:AddDropdown("PlayerDropdown", {
     end,
 })
 
--- auto update player list
 Players.PlayerAdded:Connect(function()
     PlayerDropdown:SetValues(GetPlayerNames())
 end)
@@ -768,10 +782,13 @@ function StartAutoTrade()
             if not SelectedPlayerID then continue end
 
             local player = Players.LocalPlayer
+            local target = Players:GetPlayerByUserId(SelectedPlayerID)
+            if not target then continue end
+
             local backpack = player.Backpack
             local humanoid = player.Character and player.Character:FindFirstChild("Humanoid")
 
-            -- 🔥 nếu không chọn brainrot → trade tất cả
+            -- nếu không chọn brainrot → lấy tất cả
             local list = SelectedBrainrots
             if next(list) == nil then
                 list = {}
@@ -803,12 +820,20 @@ function StartAutoTrade()
                 end
             end
 
-            -- 🔥 gửi trade
-            ReplicatedStorage:WaitForChild("Shared")
-                :WaitForChild("Packages")
-                :WaitForChild("Network")
-                :WaitForChild("rev_GiftRequest")
-                :FireServer(SelectedPlayerID)
+            -- 🔥 cooldown chống lỗi khi bị từ chối
+            local now = tick()
+            if now - lastTradeTime >= TRADE_COOLDOWN then
+                lastTradeTime = now
+
+                humanoid:UnequipTools()
+                task.wait(0.2)
+
+                ReplicatedStorage:WaitForChild("Shared")
+                    :WaitForChild("Packages")
+                    :WaitForChild("Network")
+                    :WaitForChild("rev_GiftRequest")
+                    :FireServer(SelectedPlayerID)
+            end
 
             task.wait(2)
         end
