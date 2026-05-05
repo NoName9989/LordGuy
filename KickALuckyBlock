@@ -108,7 +108,7 @@ KickFarmSettingGroup:AddLabel("Extra Tween Speed (0 - 200)")
 local ExtraSpeedSlider = KickFarmSettingGroup:AddSlider("ExtraSpeedSlider", {
     Text = "Extra Tween Speed",
     Default = 0,
-    Min = -60, -- 🔥 cho âm
+    Min = -60, 
     Max = 200,
     Rounding = 0,
     Increment = 5,
