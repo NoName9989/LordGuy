@@ -253,8 +253,6 @@ function StartFindMutationFarm()
     local TweenService = game:GetService("TweenService")
 
     while isFindMutationFarming do
-        print("🔄 [Find Mutation] Bắt đầu 1 cycle")
-
         local player = game.Players.LocalPlayer
         local character = player.Character or player.CharacterAdded:Wait()
         local root = character:WaitForChild("HumanoidRootPart")
@@ -283,37 +281,31 @@ function StartFindMutationFarm()
         conn:Disconnect()
         if not isFindMutationFarming then break end
 
-        print("⏳ Đợi 4 giây sau wave...")
         wait(4)
-        print("✅ Đã đợi xong 4 giây → Bắt đầu scan Debris")
 
-        -- ==================== SCAN CHỈ TRONG DEBRIS ====================
+        -- ==================== SCAN CHỈ TRONG 5 STUDS ====================
         local hasDesiredMutation = false
         local debris = workspace:FindFirstChild("Debris")
 
-        if not debris then
-            print("❌ Không tìm thấy workspace.Debris")
-        else
-            print("🔎 Tìm thấy Debris, có", #debris:GetChildren(), "object")
+        if debris then
+            local hrpPos = root.Position
+
             for _, model in ipairs(debris:GetChildren()) do
-                if model:IsA("Model") then
-                    print("   └─ Model:", model.Name)
-                    for _, mutName in ipairs(SelectedMutations) do
-                        if model:FindFirstChild(mutName) or model:FindFirstChild(mutName, true) then
-                            hasDesiredMutation = true
-                            print("✅ TÌM THẤY MUTATION:", mutName, "trong", model.Name)
-                            break
+                if model:IsA("Model") and model.PrimaryPart then
+                    local dist = (model.PrimaryPart.Position - hrpPos).Magnitude
+                    
+                    if dist <= 5 then   -- Giới hạn 5 studs
+                        for _, mutName in ipairs(SelectedMutations) do
+                            if model:FindFirstChild(mutName) or model:FindFirstChild(mutName, true) then
+                                hasDesiredMutation = true
+                                print("✅ TÌM THẤY MUTATION:", mutName, "trong", model.Name, "(", string.format("%.2f", dist), "studs)")
+                                break
+                            end
                         end
+                        if hasDesiredMutation then break end
                     end
-                    if hasDesiredMutation then break end
                 end
             end
-        end
-
-        if hasDesiredMutation then
-            print("🚀 Có mutation → Tween về đích")
-        else
-            print("❌ Không tìm thấy mutation → TP huỷ")
         end
 
         local target = Vector3.new(699.77, 3.00, 231.99)
