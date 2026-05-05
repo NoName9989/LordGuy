@@ -17,7 +17,7 @@ local Window = Library:CreateWindow({
 local Tabs = {
     Farm = Window:AddTab("Farm", "sword"),
     Automatic = Window:AddTab("Automatic", "bolt"),
-    ["Trade + Favorite"]= Window:AddTab("Trade + Favorite", "heart"),
+    TradeTab = Window:AddTab("Trade + Favorite", "heart"),
     Shop = Window:AddTab("Shop", "shopping-cart"),
     ["FPS Boost"] = Window:AddTab("FPS Boost", "zap"),
     Misc = Window:AddTab("Misc", "component"),
@@ -644,6 +644,162 @@ task.spawn(function()
             game:GetService("ReplicatedStorage"):WaitForChild("Shared")
                 :WaitForChild("Packages"):WaitForChild("Network")
                 :WaitForChild("rev_Offline_Claim"):FireServer()
+        end
+    end
+end)
+
+-- ==================== TAB TRADE + FAVORITE ====================
+local TradeGroup = Tabs.Farm:AddLeftGroupbox("Trade")
+local SelectedBrainrots = {}
+local SelectedMutation = nil
+local SelectedPlayer = nil
+local isAutoTrade = false
+
+-- ==================== TRADE ====================
+--1.BrainrotList
+local BrainrotList = {
+"Brainrot", -- (placeholder nếu lib cần)
+"Noobini Pizzanini","Lirili Larila","Tim Cheese","Talpa Di Fero","Svinina Bombardino",
+"Pipi Kiwi","Trippi Troppi","Fruli Frula","Gangster Footera","Bobrito Bandito",
+"Boneca Ambalabu","Ta Ta Ta Ta Sahur","Ballerina Cappuccina","Cappuccino Assassino",
+"Brr Brr Patapim","Cacto Hipopotamo","Garamararam","Madung","Waterdino","Pesto Mortioni",
+"Pannaburro","Orcalero","Mangolini Parrocini","John Pork","Gattatino Nyanino",
+"Chimpanzini Bananini","Plan Red","Plan Blue","Capi Taco","Bambini Crostini",
+"Trulimero Trulicina","Elefantucci Bananucci","Bananita Dolphinita","Salamino Pinguino",
+"Penguino Cocosino","67","Burbaloni Luliloli","Chef Crabracadabra","Capybara Eggplant",
+"Bangello","Elefanto Frigo","Rinooccio Verdini","Glorbo Fruttodrillo","Udin Din Din Dun",
+"Pandaccini Bananini","Octopusini Bluberini","Strawberelli Flamingelli","Sigma Boy",
+"Frigo Camelo","Orangutini Ananasini","Rhino Toasterino","Bombardiro Crocodilo",
+"Bombini Gusini","Castlino Fortini","Tuff Toucan","Fryuro","Burguro","Guest666",
+"Zibra Zubra Zibralini","Cavallo Virtuso","Gorillo Watermelondrillo","Cocofanto Elefanto",
+"Bambu Sahur","W or L","Girafa Celeste","Tralalero Tralala","Tralalerita Tralala",
+"Peant Jarro","Dipperi Chiperini","Rexosaurus","1x1x1x1","Matteo","Alessio",
+"Espresso Signora","Tripi Tropi Tropa Tripa","SWAG SODA","Stoppo Luminino",
+"Torrtuginni Dragonfrutini","Tictac Sahur","Cactus Pingu","Los Primos Blue",
+"La Vacca Saturno Saturnita","Agarrini La Palini","Bottellini","Karkerkar Kurkur",
+"Blackhole Goat","Compactoroni Diskaloni","Cappuccino Clownino","Nuclearo Dinossauro",
+"Los Nooo My Hotspotsitos","Chillin Chilli","Crazylone Pizaione","Corn Sahur","Meowl",
+"Strawberry Elephant","Dragonfrutina Dolphinita","Guerriro Digitale",
+"Chicleteira Bicicleteira","Pot Hotspot","Krupuk Pagi Pagi","Beluga Beluga",
+"Tralaledon","Anpali Babel","Ketchuru Matsuru","Mastodontico Telepiedone",
+"Ketupat Kepat"
+}
+
+TradeGroup:AddDropdown({
+    Name = "Brainrot",
+    Options = BrainrotList,
+    Multi = true,
+    Callback = function(v)
+        SelectedBrainrots = v
+    end
+})
+
+--2.Mutation
+local MutationList = {
+"Golden","Diamond","Plasma","Molten","Radioactive","Shadow","Electrified","Rainbow"
+}
+
+TradeGroup:AddDropdown({
+    Name = "Mutation",
+    Options = MutationList,
+    Multi = false,
+    Callback = function(v)
+        SelectedMutation = v
+    end
+})
+
+
+--3.Player
+local Players = game:GetService("Players")
+
+local function GetPlayerNames()
+    local t = {}
+    for _,p in pairs(Players:GetPlayers()) do
+        table.insert(t, p.Name)
+    end
+    return t
+end
+
+local PlayerDropdown = TradeGroup:AddDropdown({
+    Name = "Player",
+    Options = GetPlayerNames(),
+    Multi = false,
+    Callback = function(v)
+        SelectedPlayer = v
+    end
+})
+
+-- auto refresh player list
+Players.PlayerAdded:Connect(function()
+    PlayerDropdown:Refresh(GetPlayerNames())
+end)
+
+Players.PlayerRemoving:Connect(function()
+    PlayerDropdown:Refresh(GetPlayerNames())
+end)
+
+
+--4.TradeToggle
+TradeGroup:AddToggle({
+    Name = "Auto Trade",
+    Default = false,
+    Callback = function(v)
+        isAutoTrade = v
+    end
+})
+
+
+--5.logic auto trade
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+task.spawn(function()
+    while true do
+        task.wait(1)
+
+        if not isAutoTrade then continue end
+        if not SelectedPlayer then continue end
+
+        local player = Players.LocalPlayer
+        local target = Players:FindFirstChild(SelectedPlayer)
+        if not target then continue end
+
+        local backpack = player.Backpack
+        local character = player.Character
+        local humanoid = character and character:FindFirstChild("Humanoid")
+
+        for itemName,_ in pairs(SelectedBrainrots) do
+            local tool = backpack:FindFirstChild(itemName)
+
+            if tool then
+                -- 🔥 CHECK MUTATION
+                if SelectedMutation then
+                    local inner = tool:FindFirstChild(itemName)
+                    if not inner or not inner:FindFirstChild(SelectedMutation) then
+                        continue
+                    end
+                end
+
+                -- 🔥 EQUIP
+                if humanoid then
+                    humanoid:EquipTool(tool)
+                end
+
+                task.wait(0.3)
+
+                -- 🔥 SEND TRADE
+                local args = {
+                    target.UserId
+                }
+
+                ReplicatedStorage:WaitForChild("Shared")
+                    :WaitForChild("Packages")
+                    :WaitForChild("Network")
+                    :WaitForChild("rev_GiftRequest")
+                    :FireServer(unpack(args))
+
+                task.wait(1)
+            end
         end
     end
 end)
