@@ -155,7 +155,7 @@ MutationFarmGroup:AddDropdown("MutationDropdown", {
     Values = {"Golden", "Diamond", "Plasma", "Molten", "Radioactive", "Shadow", "Electrified", "Rainbow", "Void", "Virus"},
     Default = {},
     Multi = true,
-    Search = true,
+    Searchable = true,
     Callback = function(Value)
         SelectedMutations = Value
     end,
