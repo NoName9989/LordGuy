@@ -343,7 +343,7 @@ KickPowerFarmGroup:AddDropdown("BonusTrainModeDropdown", {
     Values = {"straightway", "accumulate"},
     Default = 1,
     Multi = false,
-    Search = true,
+    Searchable = true,
     Callback = function(Value)
         BonusTrainMode = Value
     end,
@@ -535,7 +535,7 @@ local CollectDropdown = CollectGroup:AddDropdown("CollectDropdown", {
     Values = CollectValues,
     Default = {},
     Multi = true,
-    Search = true,
+    Searchable = true,
     Callback = function() end   
 })
 
@@ -665,7 +665,7 @@ WeightsShopGroup:AddDropdown("WeightShopDropdown", {
     },
     Default = 1,
     Multi = false,
-    Search = true,
+    Searchable = true,
     Callback = function(Value)
         SelectedWeightShopItem = Value
     end,
