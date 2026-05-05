@@ -321,7 +321,7 @@ local KickPowerFarmGroup = Tabs.Farm:AddRightGroupbox("Kick Power Farm")
 
 local isWeightFarming = false
 local isAutoX2 = false
-local BonusTrainMode = "straightway"
+local BonusTrainMode = "Straightway"
 
 KickPowerFarmGroup:AddToggle("AutoWeightFarmToggle", {
     Text = "Enable Farm",
@@ -341,7 +341,7 @@ KickPowerFarmGroup:AddToggle("AutoX2WeightToggle", {
 
 KickPowerFarmGroup:AddDropdown("BonusTrainModeDropdown", {
     Text = "Bonus Train Mode",
-    Values = {"straightway", "accumulate"},
+    Values = {"Straightway", "Accumulate"},
     Default = 1,
     Multi = false,
     Searchable = true,
