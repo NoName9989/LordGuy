@@ -152,7 +152,7 @@ local SelectedMutations = {}
 -- ==================== UI ====================
 MutationFarmGroup:AddDropdown("MutationDropdown", {
     Text = "Find Mutation",
-    Values = {"Golden", "Diamond", "Plasma", "Molten", "Radioactive", "Shadow", "Electrified", "Rainbow"},
+    Values = {"Golden", "Diamond", "Plasma", "Molten", "Radioactive", "Shadow", "Electrified", "Rainbow", "Void", "Virus"},
     Default = {},
     Multi = true,
     Callback = function(Value)
