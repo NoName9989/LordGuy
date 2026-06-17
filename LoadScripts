@@ -3,7 +3,9 @@ local Scripts = {
     [70411440483149] = "https://raw.githubusercontent.com/NoName9989/LordGuy/refs/heads/main/100DaysAtSea",
     [139802517550914] = "https://raw.githubusercontent.com/NoName9989/LordGuy/refs/heads/main/100DaysAtSea",
     [139233844569220] = "https://raw.githubusercontent.com/NoName9989/LordGuy/refs/heads/main/ZooOrOof",
-    [89469502395769] = "https://raw.githubusercontent.com/NoName9989/LordGuy/refs/heads/main/KickALuckyBlock"
+    [89469502395769] = "https://raw.githubusercontent.com/NoName9989/LordGuy/refs/heads/main/KickALuckyBlock",
+    [89469502395769] = "https://raw.githubusercontent.com/NoName9989/LordGuy/refs/heads/main/bLockerman's%20Minesweeper"
+
 }
 
 local TweenService = game:GetService("TweenService")
